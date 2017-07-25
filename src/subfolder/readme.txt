@@ -1,1 +1,0 @@
-This subfolder exists because of a make bug on windows with the CE toolchain crashing when there are no subfolders in the src directory. Thanks Mateo lol
