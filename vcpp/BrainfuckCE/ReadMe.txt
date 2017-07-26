@@ -1,1 +1,0 @@
-A vcpp wrapper of the bytecode compiler and interpreter. Useful for debugging. It can compile the native code on windows, but it obviously can't run it.
