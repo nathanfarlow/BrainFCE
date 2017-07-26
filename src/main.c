@@ -46,155 +46,155 @@ const char *prog_move = "+++++ >>[-]<<[->>+<<]";
 
 void test_compile_bytecode(const char *program, size_t code_length, bool optimize, Instruction_t **bytecode, size_t *bytecode_length, int *error) {
 
-	if(optimize) console_print("Compiling optimized bytecode...\n");
-	else console_print("Compiling unoptimized bytecode...\n");
+    if(optimize) console_print("Compiling optimized bytecode...\n");
+    else console_print("Compiling unoptimized bytecode...\n");
 
-	compile_bytecode(program, code_length, optimize, bytecode, bytecode_length, error);
+    compile_bytecode(program, code_length, optimize, bytecode, bytecode_length, error);
 
-	if (*error != E_SUCCESS) {
-		char buffer[30];
-		sprintf(buffer, "Bytecode compile error %i\0", error);
-		console_print(buffer);
-		pause();
-	} else {
-		console_print("Compiled bytecode.\n");	
-	}
+    if (*error != E_SUCCESS) {
+        char buffer[30];
+        sprintf(buffer, "Bytecode compile error %i\0", error);
+        console_print(buffer);
+        pause();
+    } else {
+        console_print("Compiled bytecode.\n");  
+    }
 }
 
 void test_compile_native(Instruction_t *bytecode, size_t bytecode_length, uint8_t **native_code, struct Memory *mem, size_t *native_length, int *error) {
 
-	console_print("Compiling native...\n");
+    console_print("Compiling native...\n");
 
-	compile_native(bytecode, bytecode_length, native_code, native_length, mem, error);
+    compile_native(bytecode, bytecode_length, native_code, native_length, mem, error);
 
-	if (*error != E_SUCCESS) {
-		char buffer[30];
-		sprintf(buffer, "Native compile error %i\0", error);
-		console_print(buffer);
-		pause();
-	} else {
-		console_print("Compiled native.\n");
-	}
+    if (*error != E_SUCCESS) {
+        char buffer[30];
+        sprintf(buffer, "Native compile error %i\0", error);
+        console_print(buffer);
+        pause();
+    } else {
+        console_print("Compiled native.\n");
+    }
 }
 
 void test_run_interpreter(struct VM *vm)
 {
-	console_print("Running interpreter...\n\n");
+    console_print("Running interpreter...\n\n");
 
-	while(!vm_IsDone(vm)) {
+    while(!vm_IsDone(vm)) {
 
-		int error = vm_Step(vm);
-		if(error != E_SUCCESS) {
-			char buffer[25];
-			sprintf(buffer, "Runtime error %i\0", error);
-			console_print(buffer);
-			pause();
-			break;
-		}
-	}
+        int error = vm_Step(vm);
+        if(error != E_SUCCESS) {
+            char buffer[25];
+            sprintf(buffer, "Runtime error %i\0", error);
+            console_print(buffer);
+            pause();
+            break;
+        }
+    }
 
-	console_print("\nDone.\n");
+    console_print("\nDone.\n");
 }
 
 void test_run_native(uint8_t *native_code, size_t native_length)
 {
-	console_print("Executing native...\n\n");
+    console_print("Executing native...\n\n");
 
-	if(DEBUG_NATIVE)
-		dbg_SetBreakpoint(native_code);
+    if(DEBUG_NATIVE)
+        dbg_SetBreakpoint(native_code);
 
-	(* ((void(*)()) native_code)) ();
+    (* ((void(*)()) native_code)) ();
 
-	free(native_code);
+    free(native_code);
 
-	console_print("\nDone.\n");
+    console_print("\nDone.\n");
 }
 
 void main(void)  {
 
-	const char *program = prog_fractal;
-	const size_t size = strlen(program);
+    const char *program = prog_fractal;
+    const size_t size = strlen(program);
 
-	struct VM vm;
+    struct VM vm;
 
-	size_t bytecode_length;
+    size_t bytecode_length;
 
-	int error;
+    int error;
 
-	uint8_t *native_code;
-	size_t native_length;
+    uint8_t *native_code;
+    size_t native_length;
 
-	vm_Create(&vm);
+    vm_Create(&vm);
 
-	os_ClrHome();
-	fill_screen(0xFF);
+    os_ClrHome();
+    fill_screen(0xFF);
 
-	test_compile_bytecode(program, size, OPTIMIZE, &vm.instructions, &bytecode_length, &error);
-	vm.num_insns = bytecode_length;
+    test_compile_bytecode(program, size, OPTIMIZE, &vm.instructions, &bytecode_length, &error);
+    vm.num_insns = bytecode_length;
 
-	test_compile_native(vm.instructions, bytecode_length, &native_code, &vm.mem, &native_length, &error);
-	
-	test_run_native(native_code, native_length);
-	//test_run_interpreter(&vm);
+    test_compile_native(vm.instructions, bytecode_length, &native_code, &vm.mem, &native_length, &error);
+    
+    test_run_native(native_code, native_length);
+    //test_run_interpreter(&vm);
 
-	//print the first 6 cells for debugging purposes
-	debug_print_array(vm.mem.cells, 6);
-	vm_Cleanup(&vm);
+    //print the first 6 cells for debugging purposes
+    debug_print_array(vm.mem.cells, 6);
+    vm_Cleanup(&vm);
 
-	pause();
+    pause();
 }
 
 //the text positions
 uint16_t text_x = 0; uint8_t text_y = 0;
 void console_print_char(char cell) {
-	//is it possible for %c to print more than one character? hope not lol
-	char buffer[2];
-	sprintf(buffer, "%c\0", cell);
+    //is it possible for %c to print more than one character? hope not lol
+    char buffer[2];
+    sprintf(buffer, "%c\0", cell);
 
-	if(buffer[0] == '\n') {
-		text_y += 12;
-		text_x = 0;
-	} else {
-		os_FontDrawText(buffer, text_x, text_y);
-		text_x += 8;
-	}
+    if(buffer[0] == '\n') {
+        text_y += 12;
+        text_x = 0;
+    } else {
+        os_FontDrawText(buffer, text_x, text_y);
+        text_x += 8;
+    }
 }
 
 void console_print(const char *str) {
-	int i;
-	for(i = 0; i < strlen(str); i++) {
-		console_print_char(str[i]);
-	}
+    int i;
+    for(i = 0; i < strlen(str); i++) {
+        console_print_char(str[i]);
+    }
 }
 
 void debug_print_array(CELL_TYPE *arr, size_t size) {
-	size_t i = 0;
+    size_t i = 0;
 
-	console_print_char('{');
+    console_print_char('{');
 
-	for(; i < size; i++) {
-		char buffer[10];
-		sprintf(buffer, "%02X\0", arr[i]);
-		console_print(buffer);
-		if(i != size - 1) {
-			console_print(", ");
-		}
-	}
+    for(; i < size; i++) {
+        char buffer[10];
+        sprintf(buffer, "%02X\0", arr[i]);
+        console_print(buffer);
+        if(i != size - 1) {
+            console_print(", ");
+        }
+    }
 
-	console_print_char('}');
+    console_print_char('}');
 }
 
 void bf_print_cell(CELL_TYPE cell) {
-	console_print_char((char)cell);
+    console_print_char((char)cell);
 }
 
 //hacky way to supply input to the xmas tree program
 int index = 0;
 CELL_TYPE bf_get_input() {
-	int ret = 'A';
-	if(index == 0) ret = '1';
-	else if(index == 1) ret = '0';
-	else if(index >= 2) ret = 0;
-	index++;
-	return ret;
+    int ret = 'A';
+    if(index == 0) ret = '1';
+    else if(index == 1) ret = '0';
+    else if(index >= 2) ret = 0;
+    index++;
+    return ret;
 }

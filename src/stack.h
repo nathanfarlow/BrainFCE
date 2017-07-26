@@ -16,8 +16,8 @@
 #define STACK_TYPE unsigned int
 
 typedef struct Stack {
-	STACK_TYPE stack[MAX_STACK_SIZE];
-	unsigned int top;
+    STACK_TYPE stack[MAX_STACK_SIZE];
+    unsigned int top;
 } Stack_t;
 
 void stack_Create(Stack_t *stack);

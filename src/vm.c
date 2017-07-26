@@ -5,64 +5,64 @@ extern "C" {
 #include "vm.h"
 
 void vm_Create(struct VM *vm) {
-	mem_Create(&vm->mem);
+    mem_Create(&vm->mem);
 
-	vm->pc = 0;
+    vm->pc = 0;
 }
 
 int vm_Compile(struct VM *vm, const char *code, size_t len, bool optimize) {
-	int error;
-	compile_bytecode(code, len, true, &vm->instructions, &vm->num_insns, &error);
-	return error;
+    int error;
+    compile_bytecode(code, len, true, &vm->instructions, &vm->num_insns, &error);
+    return error;
 }
 
 void vm_Cleanup(struct VM *vm) {
-	free((void*)vm->instructions);
+    free((void*)vm->instructions);
 }
 
 //http://esolangs.org/wiki/Brainfuck
 int vm_Step(struct VM *vm) {
-	Instruction_t insn = vm->instructions[vm->pc];
+    Instruction_t insn = vm->instructions[vm->pc];
 
-	switch(insn.opcode) {
-	case OP_ADD_CELL_POINTER:
-		vm->mem.cell_ptr += insn.operand;// *sizeof(CELL_TYPE);
+    switch(insn.opcode) {
+    case OP_ADD_CELL_POINTER:
+        vm->mem.cell_ptr += insn.operand;// *sizeof(CELL_TYPE);
 
-		if(vm->mem.cell_ptr - vm->mem.cells >= NUM_CELLS)
-			return E_CELL_POINTER_OUT_OF_BOUNDS;
+        if(vm->mem.cell_ptr - vm->mem.cells >= NUM_CELLS)
+            return E_CELL_POINTER_OUT_OF_BOUNDS;
 
-		break;
-	case OP_ADD_CELL_VALUE:
-		*vm->mem.cell_ptr += insn.operand;
-		break;
-	case OP_PRINT_CELL:
-		bf_print_cell(*vm->mem.cell_ptr);
-		break;
-	case OP_INPUT_CELL:
-		*vm->mem.cell_ptr = bf_get_input();
-		break;
-	case OP_OPEN_BRACKET:
-		if(*vm->mem.cell_ptr == 0)
-			vm->pc = insn.operand - 1; //have to subtract 1 because pc is incremented at end of switch
-		break;
-	case OP_CLOSE_BRACKET:
-		if(*vm->mem.cell_ptr != 0)
-			vm->pc = insn.operand - 1; //have to subtract 1 because pc is incremented at end of switch
-		break;
-	case OP_SET_ZERO:
-		*vm->mem.cell_ptr = 0;
-		break;
-	default:
-		return E_INVALID_OPCODE;
-	}
+        break;
+    case OP_ADD_CELL_VALUE:
+        *vm->mem.cell_ptr += insn.operand;
+        break;
+    case OP_PRINT_CELL:
+        bf_print_cell(*vm->mem.cell_ptr);
+        break;
+    case OP_INPUT_CELL:
+        *vm->mem.cell_ptr = bf_get_input();
+        break;
+    case OP_OPEN_BRACKET:
+        if(*vm->mem.cell_ptr == 0)
+            vm->pc = insn.operand - 1; //have to subtract 1 because pc is incremented at end of switch
+        break;
+    case OP_CLOSE_BRACKET:
+        if(*vm->mem.cell_ptr != 0)
+            vm->pc = insn.operand - 1; //have to subtract 1 because pc is incremented at end of switch
+        break;
+    case OP_SET_ZERO:
+        *vm->mem.cell_ptr = 0;
+        break;
+    default:
+        return E_INVALID_OPCODE;
+    }
 
-	vm->pc++;
+    vm->pc++;
 
-	return E_SUCCESS;
+    return E_SUCCESS;
 }
 
 bool vm_IsDone(struct VM *vm) {
-	return vm->pc >= vm->num_insns;
+    return vm->pc >= vm->num_insns;
 }
 
 #ifdef __cplusplus

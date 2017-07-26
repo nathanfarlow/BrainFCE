@@ -13,12 +13,12 @@
 
 struct VM {
 
-	struct Memory mem;
-	
-	Instruction_t *instructions;
-	size_t num_insns;
+    struct Memory mem;
+    
+    Instruction_t *instructions;
+    size_t num_insns;
 
-	CELL_TYPE pc;
+    CELL_TYPE pc;
 };
 
 void vm_Create(struct VM *vm);

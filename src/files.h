@@ -8,8 +8,8 @@
 #include <fileioc.h>
 
 typedef struct {
-	char **files;
-	uint16_t amount;
+    char **files;
+    uint16_t amount;
 } FileList_t;
 
 void list_Create(FileList_t *list);
