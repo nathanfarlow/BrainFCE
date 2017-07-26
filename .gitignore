@@ -1,5 +1,7 @@
 obj/
 bin/
 
+vcpp/BrainfuckCE/Debug
+
 *.sublime-project
 *.sublime-workspace
