@@ -2,155 +2,181 @@
 extern "C" {
 #endif
 
+#include <stdlib.h> //for malloc
+#include <string.h> //for memset
+
 #include "compiler.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <stddef.h>
-#include <stdbool.h>
-
-#include <string.h>
 
 #include "stack.h"
 
-#ifdef OPTIMIZE
-CELL_TYPE consecutive(const char *code, size_t index, char c) {
+void mem_Create(struct Memory *mem) {
+	memset(mem->cells, 0, sizeof(mem->cells));
+	mem->cell_ptr = mem->cells;
+}
 
-	CELL_TYPE consec = 0;
-	for (; index < strlen(code); index++) {
-		if (code[index] == c)
-			consec++;
-		else break;
+/*
+	This function basically takes strings of the same type of insn and changes it into one instruction
+
+	>><><<>>> = OP_ADD_CELL_POINTER 3
+	++-+-+++- = OP_ADD_CELL_VALUE -1 (but turns into an unsigned number)
+*/
+void scan_for_operand(const char *code, size_t len, unsigned int index, char add, char sub, CELL_TYPE *operand, size_t *consumed) {
+
+	*operand = 0;
+	*consumed = 0;
+
+	for(; index < len; index++) {
+		char c = code[index];
+
+		//this switch will allow us to ignore non-bf characters
+		switch (c) {
+		case '>':
+		case '<':
+		case '+':
+		case '-':
+		case '.':
+		case ',':
+		case '[':
+		case ']':
+			if (c == add)
+				(*operand)++;
+			else if (c == sub)
+				(*operand)--;
+			else
+				return;
+		}
+
+		(*consumed)++;
+	}
+}
+
+
+#define index_equ(check_index, character) (check_index < len && code[check_index] == character)
+
+Instruction_t next_insn(const char *code, size_t len, unsigned int index, bool optimize, size_t *consumed) {
+	Instruction_t insn = {0, 0};
+
+	unsigned int loops = 0;
+
+	*consumed = 1;
+
+loop:
+	switch (code[index]) {
+	case '>':
+	case '<':
+		insn.opcode = OP_ADD_CELL_POINTER;
+
+		if (optimize)
+			scan_for_operand(code, len, index, '>', '<', &insn.operand, consumed);
+		else
+			insn.operand = code[index] == '>' ? 1 : -1;
+
+		break;
+	case '+':
+	case '-':
+		insn.opcode = OP_ADD_CELL_VALUE;
+
+		if(optimize)
+			scan_for_operand(code, len, index, '+', '-', &insn.operand, consumed);
+		else
+			insn.operand = code[index] == '+' ? 1 : -1;
+
+		break;
+	case '.':
+		insn.opcode = OP_PRINT_CELL;
+		break;
+	case ',':
+		insn.opcode = OP_INPUT_CELL;
+		break;
+	case '[':
+		insn.opcode = OP_OPEN_BRACKET;
+
+		if (index_equ(index + 1, '-') && index_equ(index + 2, ']')) {
+			insn.opcode = OP_SET_ZERO;
+			*consumed = 3;
+		}
+
+		break;
+	case ']':
+		insn.opcode = OP_CLOSE_BRACKET;
+		break;
+	default:
+		index++;
+		loops++;
+		goto loop;
 	}
 
-	return consec;
-}
-#endif
+	*consumed += loops;
 
-void compile_bytecode(const char *code, Instruction_t **instructions_ret, size_t *instructions_length, int *error) {
+	return insn;
+}
+
+void compile_bytecode(const char *code, size_t len, bool optimize, Instruction_t **instructions_ret, size_t *instructions_length, int *error) {
 
 	size_t i;
-
-	uint32_t current_insn = 0;
-	size_t insn_len = 0;
-
+	
 	Stack_t stack;
 
 	Instruction_t *instructions;
+	size_t num_insns = 0;
 
-	if(code == NULL || instructions_ret == NULL) {
-		if(error != NULL)
+	unsigned int current_insn = 0;
+
+	if (code == NULL || instructions_ret == NULL) {
+		if (error != NULL)
 			*error = E_GENERIC_COMPILE;
 		return;
 	}
 
 	stack_Create(&stack);
 
-	//lazy optimization here, this only removes non insn characters.
-	//when optimize flag is set, we need to do better than this to save space.
-	for (i = 0; i < strlen(code); i++) {
-		switch (code[i]) {
-		case '>':
-		case '<':
-		case '+':
-		case '-':
-		case '.':
-		case ',':
-		case '[':
-		case ']':
-			insn_len++;
-			break;
-		}
+	//calculate the amount of instructions
+	i = 0;
+	while (i < len) {
+		size_t consumed;
+
+		next_insn(code, len, i, optimize, &consumed);
+
+		num_insns++;
+
+		i += consumed;
 	}
 
-	instructions = malloc(sizeof(Instruction_t) * (insn_len + 1));
+	instructions = malloc(num_insns * sizeof(Instruction_t));
 
-	for(i = 0; i < strlen(code) + 1; i++) {
-
-		CELL_TYPE consec;
-		Instruction_t insn = { -1, -1 };
+	i = 0;
+	while (i < len) {
 		
-		switch(code[i]) {
-		case '>':
-#ifdef OPTIMIZE
-			consec = consecutive(code, i, '>');
-			insn.opcode = OP_ADD_CELL_POINTER; insn.operand = consec;
-			i += consec - 1;
-#else
-			insn.opcode = OP_ADD_CELL_POINTER; insn.operand = 1;
-#endif
-			break;
-		case '<':
-#ifdef OPTIMIZE
-			consec = consecutive(code, i, '<');
-			insn.opcode = OP_SUB_CELL_POINTER; insn.operand = consec;
-			i += consec - 1;
-#else
-			insn.opcode = OP_SUB_CELL_POINTER; insn.operand = 1;
-#endif
-			break;
-		case '+':
-#ifdef OPTIMIZE
-			consec = consecutive(code, i, '+');
-			insn.opcode = OP_ADD_CELL_VALUE; insn.operand = consec;
-			i += consec - 1;
-#else
-			insn.opcode = OP_ADD_CELL_VALUE; insn.operand = 1;
-#endif
-			break;
-		case '-':
-#ifdef OPTIMIZE
-			consec = consecutive(code, i, '-');
-			insn.opcode = OP_SUB_CELL_VALUE; insn.operand = consec;
-			i += consec - 1;
-#else
-			insn.opcode = OP_SUB_CELL_VALUE; insn.operand = 1;
-#endif
-			break;
-		case '.':
-			insn.opcode = OP_PRINT_CELL; insn.operand = 1;
-			break;
-		case ',':
-			insn.opcode = OP_INPUT_CELL; insn.operand = 1;
-			break;
-		case '[':
-#ifdef OPTIMIZE
-			if(i + 2 < strlen(code)) {
-				if(code[i + 1] == '-' && code[i + 2] == ']') {
-					insn.opcode = OP_SET_ZERO;
-					insn.operand = 0;
-					i += 2;
-					break;
-				}
-			}
+		size_t consumed;
 
-#endif
+		//have to split these two lines up due to a compiler error lol
+		//P3: Internal Error(0x83BAF1): \ Please contact Technical Support \ make: *** [obj/compiler.obj] Error -1
+		Instruction_t insn;
+		insn = next_insn(code, len, i, optimize, &consumed);
 
-			if(stack.top >= MAX_STACK_SIZE) {
-				if(error != NULL)
+		switch (insn.opcode) {
+		case OP_OPEN_BRACKET:
+
+			if (stack.top >= MAX_STACK_SIZE) {
+				if (error != NULL)
 					*error = E_STACK_OVERFLOW;
 				return;
 			}
 
-			insn.opcode = OP_OPEN_BRACKET;
-			insn.operand = 0; //This will be fixed later in the ]
-
 			stack_Push(&stack, current_insn);
 			break;
-		case ']':
-
-			if(stack.top <= 0) {
-				if(error != NULL)
+		case OP_CLOSE_BRACKET:
+			if (stack.top <= 0) {
+				if (error != NULL)
 					*error = E_STACK_UNDERFLOW;
 				return;
 			}
 
-			insn.opcode = OP_CLOSE_BRACKET;
 			//set the operand of this close bracket to the index of the corresponding open bracket + 1
 			insn.operand = stack_Pop(&stack) + 1;
 
 			if (instructions[insn.operand - 1].opcode != OP_OPEN_BRACKET) {
-				if(error != NULL)
+				if (error != NULL)
 					*error = E_GENERIC_COMPILE; //something is terribly wrong here in our code, not the bf code
 				return;
 			}
@@ -158,41 +184,40 @@ void compile_bytecode(const char *code, Instruction_t **instructions_ret, size_t
 			//set the operand of the corresponding open bracket to the index right after this close bracket
 			instructions[insn.operand - 1].operand = current_insn + 1;
 			break;
-		case '\0':
-			insn.opcode = OP_DONE;
-			break;
-		default:
-			continue;
 		}
 
-		instructions[current_insn++] = insn;
-	}
 
+		instructions[current_insn++] = insn;
+		i += consumed;
+	}
+	
+	
 	*instructions_ret = instructions;
 
-	if(instructions_length != NULL)
+	if (instructions_length != NULL)
 		*instructions_length = current_insn;
 
-	if(error != NULL)
+	if (error != NULL)
 		*error = E_SUCCESS;
 }
 
-#define op(opcode) code[pc++] = opcode
 
-#define op_2_bytes(integer)	{op(((uint32_t)(integer) >> 8) & 0xFF);/*high byte of integer*/				\
-							op(((uint32_t)(integer) >> 0) & 0xFF); /*low byte of integer*/}
+#define op(opcode) {if(pc >= memory) {*error = E_OUT_OF_MEMORY; return;} code[pc++] = opcode;}
 
-#define op_3_bytes(integer) {op(((uint32_t)(integer) >> 16) & 0xFF); /*highest byte of integer*/		\
-							op(((uint32_t)(integer) >> 8) & 0xFF); /*middle byte of integer*/ 			\
-							op(((uint32_t)(integer) >> 0) & 0xFF); /*lowest byte of integer*/}
+#define op_2_bytes(integer)	{op(((unsigned int)(integer) >> 8) & 0xFF);/*high byte of integer*/				\
+							op(((unsigned int)(integer) >> 0) & 0xFF); /*low byte of integer*/}
+
+#define op_3_bytes(integer) {op(((unsigned int)(integer) >> 16) & 0xFF); /*highest byte of integer*/		\
+							op(((unsigned int)(integer) >> 8) & 0xFF); /*middle byte of integer*/ 			\
+							op(((unsigned int)(integer) >> 0) & 0xFF); /*lowest byte of integer*/}
 
 
-#define op_2_bytes_little(integer)	op(((uint32_t)(integer) >> 0) & 0xFF); /*low byte of integer*/ 		\
-									op(((uint32_t)(integer) >> 8) & 0xFF)  /*high byte of integer*/
+#define op_2_bytes_little(integer)	op(((unsigned int)(integer) >> 0) & 0xFF); /*low byte of integer*/ 		\
+									op(((unsigned int)(integer) >> 8) & 0xFF)  /*high byte of integer*/
 
-#define op_3_bytes_little(integer)	{op(((uint32_t)(integer) >> 0) & 0xFF); /*lowest byte of integer*/ 	\
-									op(((uint32_t)(integer) >> 8) & 0xFF); /*middle byte of integer*/ 	\
-									op(((uint32_t)(integer) >> 16) & 0xFF); /*highest byte of integer*/}
+#define op_3_bytes_little(integer)	{op(((unsigned int)(integer) >> 0) & 0xFF); /*lowest byte of integer*/ 	\
+									op(((unsigned int)(integer) >> 8) & 0xFF); /*middle byte of integer*/ 	\
+									op(((unsigned int)(integer) >> 16) & 0xFF); /*highest byte of integer*/}
 
 /* ld hl, (***) */
 #define op_load_hl_address(integer) {op(0x2A); op_3_bytes_little(integer);}
@@ -207,12 +232,12 @@ void compile_bytecode(const char *code, Instruction_t **instructions_ret, size_t
 #define op_add_hl(increment, preserve_de) {								\
 	if(increment == 0);													\
 	/*yeah too lazy for for loops, probably a better way. curse c89*/ 	\
-	else if(increment == 1) op(0x23);									\
-	else if (increment == 2) {op(0x23); op(0x23);}						\
-	else if (increment == 3) {op(0x23); op(0x23); op(0x23);}			\
-	else if (increment == -1) op(0x2B);									\
-	else if (increment == -2) {op(0x2B); op(0x2B);}						\
-	else if (increment == -3) {op(0x2B); op(0x2B); op(0x2B);}			\
+	else if(increment == (CELL_TYPE)1) {op(0x23);}						\
+	else if (increment == (CELL_TYPE)2) {op(0x23); op(0x23);}			\
+	else if (increment == (CELL_TYPE)3) {op(0x23); op(0x23); op(0x23);} \
+	else if (increment == (CELL_TYPE)-1) {op(0x2B);}					\
+	else if (increment == (CELL_TYPE)-2) {op(0x2B); op(0x2B);}			\
+	else if (increment == (CELL_TYPE)-3) {op(0x2B); op(0x2B); op(0x2B);}\
 	else {																\
 		if(preserve_de) op(0xD5); /*push de*/							\
 		op_load_de(increment);	/*10 cycles*/							\
@@ -221,15 +246,16 @@ void compile_bytecode(const char *code, Instruction_t **instructions_ret, size_t
 	}																	\
 }
 
+
 #define op_add_de(increment, preserve_hl) {								\
 	if(increment == 0);													\
 	/*yeah too lazy for for loops, probably a better way. curse c89*/ 	\
-	else if(increment == 1) op(0x13);									\
-	else if (increment == 2) {op(0x13); op(0x13);}						\
-	else if (increment == 3) {op(0x13); op(0x13); op(0x13);}			\
-	else if (increment == -1) op(0x1B);									\
-	else if (increment == -2) {op(0x1B); op(0x1B);}						\
-	else if (increment == -3) {op(0x1B); op(0x1B); op(0x1B);}			\
+	else if(increment == (CELL_TYPE)1) {op(0x13);}						\
+	else if (increment == (CELL_TYPE)2) {op(0x13); op(0x13);}			\
+	else if (increment == (CELL_TYPE)3) {op(0x13); op(0x13); op(0x13);}	\
+	else if (increment == (CELL_TYPE)-1) {op(0x1B);}					\
+	else if (increment == (CELL_TYPE)-2) {op(0x1B); op(0x1B);}			\
+	else if (increment == (CELL_TYPE)-3) {op(0x1B); op(0x1B); op(0x1B);}\
 	else {																\
 		if(preserve_hl) op(0xE5); /*push hl*/							\
 		op_load_hl(increment);	/*10 cycles*/							\
@@ -247,7 +273,7 @@ void compile_bytecode(const char *code, Instruction_t **instructions_ret, size_t
 #define op_load_current_cell_value_into_de()	\
 	if(hl != CURRENT_CELL) {					\
 		if(hl != CELL_PTR)						\
-			op_load_hl_address(&vm->cell_ptr);	\
+			op_load_hl_address(&mem->cell_ptr);	\
 		op_2_bytes(0xED17); /*ld de, (hl)*/		\
 	}
 
@@ -265,11 +291,38 @@ enum reg_state {
 	.SIL 0x52 nothing(?)
 	.LIL 0x5B writes 3 bytes
 
+	ld.sis ($1234), hl, loads 16-bit HL into [MB, $34, $12]
+
+	To be exact: it stores L in MB3512 and H in MB3513
+
 	we are in adl mode
 	we want lis
+
+	256 KB of RAM (154 KB user accessible), 4 MB of Flash ROM (3 MB user accessible)
+	wtf? why can't we malloc() more?
+
+	ld (hl),e \ inc hl \ ld (hl),d
+
+
+
+	ld hl, current_cell_ptr
+	ld de, (hl)
+	ex de, hl
+	ld bc, increment
+	add hl, bc
+	ex de, hl
+	ld (hl), de
+
+	hl = current_cell_ptr
+	de = current value
+
+
+	ex de, ,hl \ add hl, bc \ ex de, hl \ ld (hl), de
 */
 
-void compile_native(const Instruction_t *instructions, uint32_t instruction_length, uint8_t **native_code, size_t *native_length, struct VM *vm, int *error) {
+uint8_t insns[45644];
+
+void compile_native(const Instruction_t *instructions, uint32_t instruction_length, uint8_t **native_code, size_t *native_length, struct Memory *mem, int *error) {
 	uint32_t i = 0;
 	uint32_t pc = 0;
 
@@ -280,7 +333,16 @@ void compile_native(const Instruction_t *instructions, uint32_t instruction_leng
 
 	enum reg_state hl = JUNK, de = JUNK;
 
-	*native_code = malloc(1024);
+	//45644 bytes needed for fractal O.o
+	size_t memory = 45644;// 1024;
+
+	//*native_code = malloc(memory);
+	*native_code = insns;
+
+	if(native_code <= 0) {
+		*error = E_OUT_OF_MEMORY;
+		return;
+	}
 
 	stack_Create(&stack);
 
@@ -297,22 +359,24 @@ void compile_native(const Instruction_t *instructions, uint32_t instruction_leng
 		case OP_ADD_CELL_POINTER:
 
 			if(hl != CELL_PTR)
-				op_load_hl_address(&vm->cell_ptr);
+				op_load_hl_address(&mem->cell_ptr);
 			op_add_hl(instruction.operand * sizeof(CELL_TYPE), false);
-			op_write_hl_to_address(&vm->cell_ptr);
+			op_write_hl_to_address(&mem->cell_ptr);
 
 			hl = CELL_PTR;
 			de = JUNK;
 			break;
+/*
 		case OP_SUB_CELL_POINTER:
 			if(hl != CELL_PTR)
-				op_load_hl_address(&vm->cell_ptr);
+				op_load_hl_address(&mem->cell_ptr);
 			op_add_hl(-1 * instruction.operand * sizeof(CELL_TYPE), false);
-			op_write_hl_to_address(&vm->cell_ptr);
+			op_write_hl_to_address(&mem->cell_ptr);
 
 			hl = CELL_PTR;
 			de = JUNK;
 			break;
+*/
 		case OP_ADD_CELL_VALUE:
 
 			
@@ -325,6 +389,7 @@ void compile_native(const Instruction_t *instructions, uint32_t instruction_leng
 			hl = CURRENT_CELL;
 			de = CELL_VALUE;
 			break;
+/*
 		case OP_SUB_CELL_VALUE:
 		
 			op_load_current_cell_value_into_de();
@@ -336,6 +401,7 @@ void compile_native(const Instruction_t *instructions, uint32_t instruction_leng
 			hl = CURRENT_CELL;
 			de = CELL_VALUE;
 			break;
+*/
 		case OP_PRINT_CELL:
 
 			op_load_current_cell_value_into_de();
@@ -354,7 +420,7 @@ void compile_native(const Instruction_t *instructions, uint32_t instruction_leng
 			op_3_bytes_little(bf_get_input);
 
 			op(0xEB); //ex de, hl
-			op_load_hl_address(&vm->cell_ptr);
+			op_load_hl_address(&mem->cell_ptr);
 
 			op_2_bytes(0xED1F); //ld (hl), de
 			
@@ -423,7 +489,7 @@ void compile_native(const Instruction_t *instructions, uint32_t instruction_leng
 			break;
 		case OP_SET_ZERO:
 			if(hl != CELL_PTR)
-				op_load_hl_address(&vm->cell_ptr);
+				op_load_hl_address(&mem->cell_ptr);
 
 			op_load_de(0);
 
@@ -433,13 +499,12 @@ void compile_native(const Instruction_t *instructions, uint32_t instruction_leng
 			de = CELL_VALUE; //TODO: further optimizations here
 
 			break;
-		case OP_DONE:
-			op(0xD1); //pop de
-			op(0xE1); //pop hl
-			op(0xC9); //ret
-			break;
 		}
 	}
+
+	op(0xD1); //pop de
+	op(0xE1); //pop hl
+	op(0xC9); //ret
 
 	*native_length = pc;
 	
