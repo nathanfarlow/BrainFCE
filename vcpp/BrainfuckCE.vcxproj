@@ -139,18 +139,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\src\compiler.c" />
-    <ClCompile Include="..\..\src\stack.c" />
-    <ClCompile Include="..\..\src\vm.c" />
+    <ClCompile Include="..\src\compiler.c" />
+    <ClCompile Include="..\src\stack.c" />
+    <ClCompile Include="..\src\vm.c" />
     <ClCompile Include="BrainfuckCE.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\compiler.h" />
-    <ClInclude Include="..\..\src\stack.h" />
-    <ClInclude Include="..\..\src\vm.h" />
+    <ClInclude Include="..\src\compiler.h" />
+    <ClInclude Include="..\src\stack.h" />
+    <ClInclude Include="..\src\vm.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

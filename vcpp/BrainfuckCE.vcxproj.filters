@@ -15,30 +15,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="BrainfuckCE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\compiler.c">
+    <ClCompile Include="..\src\compiler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\stack.c">
+    <ClCompile Include="..\src\stack.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\vm.c">
+    <ClCompile Include="..\src\vm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\compiler.h">
+    <ClInclude Include="..\src\compiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\stack.h">
+    <ClInclude Include="..\src\stack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\vm.h">
+    <ClInclude Include="..\src\vm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

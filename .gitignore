@@ -1,9 +1,9 @@
 obj/
 bin/
 
-vcpp/BrainfuckCE/Debug/
-vcpp/BrainfuckCE/.vs/
-vcpp/BrainfuckCE/BrainfuckCE.vcxproj.user
+vcpp/Debug/
+vcpp/.vs/
+vcpp/BrainfuckCE.vcxproj.user
 
 *.sublime-project
 *.sublime-workspace
