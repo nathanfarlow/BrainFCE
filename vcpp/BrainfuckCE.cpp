@@ -21,9 +21,9 @@ void test_compile_bytecode(const char *program, size_t code_length, bool optimiz
     }
 }
 
-void test_compile_native(Instruction_t *bytecode, size_t bytecode_length, uint8_t **native_code, struct Memory *mem, size_t *native_length, int *error)
+void test_compile_native(const char *program, size_t code_length, bool optimize, uint8_t **native_code, struct Memory *mem, size_t *native_length, int *error)
 {
-    compile_native(bytecode, bytecode_length, native_code, native_length, mem, error);
+    compile_native(program, code_length, optimize, native_code, native_length, mem, error);
 
     if (*error != E_SUCCESS) {
         std::cout << "Native compile error " << error << std::endl;
@@ -69,11 +69,11 @@ const char *prog_triple_mult = "++++[-]++++++[->+++++[->++<]<]>>";
 /*should end with 0x5 in cell 2 (0 based)*/
 const char *prog_move = "+++++ >>[-]<<[->>+<<]";
 
-const char *test = "+>+";
+const char *test = "+++[->+<]";
 
 void main(void) {
 
-    const char *program = fractal;
+    const char *program = test;
     const size_t size = strlen(program);
 
     struct VM vm;
@@ -90,7 +90,7 @@ void main(void) {
     test_compile_bytecode(program, size, true, &vm.instructions, &bytecode_length, &error);
     vm.num_insns = bytecode_length;
 
-    test_compile_native(vm.instructions, bytecode_length, &native_code, &vm.mem, &native_length, &error);
+    test_compile_native(program, size, true, &native_code, &vm.mem, &native_length, &error);
 
     test_run_interpreter(&vm);
 

@@ -7,6 +7,7 @@ extern "C" {
 void vm_Create(struct VM *vm) {
     mem_Create(&vm->mem);
 
+    vm->instructions = NULL;
     vm->pc = 0;
 }
 
@@ -17,7 +18,8 @@ int vm_Compile(struct VM *vm, const char *code, size_t len, bool optimize) {
 }
 
 void vm_Cleanup(struct VM *vm) {
-    free((void*)vm->instructions);
+    if(vm->instructions != NULL)
+        free((void*)vm->instructions);
 }
 
 //http://esolangs.org/wiki/Brainfuck

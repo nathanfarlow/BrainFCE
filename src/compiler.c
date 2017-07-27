@@ -202,209 +202,223 @@ void compile_bytecode(const char *code, size_t len, bool optimize, Instruction_t
 }
 
 
-#define op(opcode) {if(pc >= memory) {*error = E_OUT_OF_MEMORY; return;} code[pc++] = opcode;}
-
-#define op_2_bytes(integer) {op(((unsigned int)(integer) >> 8) & 0xFF);/*high byte of integer*/             \
-                            op(((unsigned int)(integer) >> 0) & 0xFF); /*low byte of integer*/}
-
-#define op_3_bytes(integer) {op(((unsigned int)(integer) >> 16) & 0xFF); /*highest byte of integer*/        \
-                            op(((unsigned int)(integer) >> 8) & 0xFF); /*middle byte of integer*/           \
-                            op(((unsigned int)(integer) >> 0) & 0xFF); /*lowest byte of integer*/}
+#define op(opcode) {if(pc >= MAX_INSN) {*error = E_OUT_OF_MEMORY; return;} (*native_code)[pc++] = opcode;}
 
 
-#define op_2_bytes_little(integer)  op(((unsigned int)(integer) >> 0) & 0xFF); /*low byte of integer*/      \
-                                    op(((unsigned int)(integer) >> 8) & 0xFF)  /*high byte of integer*/
+#define op_2_bytes(integer) {op(((unsigned int)(integer) >> 8) & 0xFF);             /*high byte of integer*/    \
+                            op(((unsigned int)(integer) >> 0) & 0xFF);}             /*low byte of integer*/
 
-#define op_3_bytes_little(integer)  {op(((unsigned int)(integer) >> 0) & 0xFF); /*lowest byte of integer*/  \
-                                    op(((unsigned int)(integer) >> 8) & 0xFF); /*middle byte of integer*/   \
-                                    op(((unsigned int)(integer) >> 16) & 0xFF); /*highest byte of integer*/}
+#define op_3_bytes(integer) {op(((unsigned int)(integer) >> 16) & 0xFF);            /*highest byte of integer*/ \
+                            op(((unsigned int)(integer) >> 8) & 0xFF);              /*middle byte of integer*/  \
+                            op(((unsigned int)(integer) >> 0) & 0xFF);}             /*lowest byte of integer*/
 
-/* ld hl, (***) */
-#define op_load_hl_address(integer) {op(0x2A); op_3_bytes_little(integer);}
-/*ld hl, *** */
-#define op_load_hl(integer) {op(0x21); op_3_bytes_little(integer);}
+#define op_2_bytes_little(integer)  {op(((unsigned int)(integer) >> 0) & 0xFF);     /*low byte of integer*/     \
+                                    op(((unsigned int)(integer) >> 8) & 0xFF)}      /*high byte of integer*/
 
-#define op_write_hl_to_address(address) {op(0x22); op_3_bytes_little(address)}
-
-/* ld de, *** */
-#define op_load_de(integer) {op(0x11); op_3_bytes_little(integer);}
-
-#define op_add_hl(increment, preserve_de) {                             \
-    if(increment == 0);                                                 \
-    /*yeah too lazy for for loops, probably a better way. curse c89*/   \
-    else if(increment == (CELL_TYPE)1) {op(0x23);}                      \
-    else if (increment == (CELL_TYPE)2) {op(0x23); op(0x23);}           \
-    else if (increment == (CELL_TYPE)3) {op(0x23); op(0x23); op(0x23);} \
-    else if (increment == (CELL_TYPE)-1) {op(0x2B);}                    \
-    else if (increment == (CELL_TYPE)-2) {op(0x2B); op(0x2B);}          \
-    else if (increment == (CELL_TYPE)-3) {op(0x2B); op(0x2B); op(0x2B);}\
-    else {                                                              \
-        if(preserve_de) op(0xD5); /*push de*/                           \
-        op_load_de(increment);  /*10 cycles*/                           \
-        op(0x19); /*add hl, de 11 cycles*/                              \
-        if(preserve_de) op(0xD1); /*pop de*/                            \
-    }                                                                   \
-}
+#define op_3_bytes_little(integer)  {op(((unsigned int)(integer) >> 0) & 0xFF);     /*lowest byte of integer*/  \
+                                    op(((unsigned int)(integer) >> 8) & 0xFF);      /*middle byte of integer*/  \
+                                    op(((unsigned int)(integer) >> 16) & 0xFF);}    /*highest byte of integer*/
 
 
-#define op_add_de(increment, preserve_hl) {                             \
-    if(increment == 0);                                                 \
-    /*yeah too lazy for for loops, probably a better way. curse c89*/   \
-    else if(increment == (CELL_TYPE)1) {op(0x13);}                      \
-    else if (increment == (CELL_TYPE)2) {op(0x13); op(0x13);}           \
-    else if (increment == (CELL_TYPE)3) {op(0x13); op(0x13); op(0x13);} \
-    else if (increment == (CELL_TYPE)-1) {op(0x1B);}                    \
-    else if (increment == (CELL_TYPE)-2) {op(0x1B); op(0x1B);}          \
-    else if (increment == (CELL_TYPE)-3) {op(0x1B); op(0x1B); op(0x1B);}\
-    else {                                                              \
-        if(preserve_hl) op(0xE5); /*push hl*/                           \
-        op_load_hl(increment);  /*10 cycles*/                           \
-        op(0x19); /*add hl, de 11 cycles*/                              \
-        op(0xEB); /*ex de, hl*/                                         \
-        if(preserve_hl) op(0xE1); /*pop hl*/                            \
-    }                                                                   \
+#define op_jp_z(jump_address)   {op(0xCA); op_3_bytes_little(jump_address);}        /*jp z, *** */
+#define op_jp_nz(jump_address)  {op(0xC2); op_3_bytes_little(jump_address);}        /*jp nz, *** */
+
+#define op_load_hl_address(integer) {op(0x2A); op_3_bytes_little(integer);}         /* ld hl, (***) */
+#define op_load_hl(integer) {op(0x21); op_3_bytes_little(integer);}                 /*ld hl, *** */
+    
+#define op_write_hl_to_address(address) {op(0x22); op_3_bytes_little(address)}      /*ld (***), hl*/
+    
+#define op_load_de(integer) {op(0x11); op_3_bytes_little(integer);}                 /* ld de, *** */
+#define op_load_bc(integer) {op(0x01); op_3_bytes_little(integer);}                 /* ld bc, *** */
+
+#define op_inc_hl() op(0x23) /*inc hl*/
+#define op_dec_hl() op(0x2B) /*dec hl*/
+
+#define op_inc_de() op(0x13) /*inc de*/
+#define op_dec_de() op(0x1B) /*dec de*/
+
+
+/*
+Adds increment to hl register.
+BEFORE:
+    hl = starting value
+AFTER:
+    hl = starting value + increment
+    bc = increment (unless preserve_bc)
+*/
+#define op_add_hl(increment, preserve_bc) {                                         \
+    if(increment == 0);                                                             \
+    /*yeah too lazy for for loops, probably a better way. curse c89*/               \
+    else if(increment == (CELL_TYPE)1) {op_inc_hl();}                               \
+    else if (increment == (CELL_TYPE)2) {op_inc_hl(); op_inc_hl();}                 \
+    else if (increment == (CELL_TYPE)3) {op_inc_hl(); op_inc_hl(); op_inc_hl();}    \
+    else if (increment == (CELL_TYPE)-1) {op_dec_hl()}                              \
+    else if (increment == (CELL_TYPE)-2) {op_dec_hl(); op_dec_hl();}                \
+    else if (increment == (CELL_TYPE)-3) {op_dec_hl(); op_dec_hl(); op_dec_hl();}   \
+    else {                                                                          \
+        if(preserve_bc) op(0xC5); /*push bc*/                                       \
+        op_load_bc(increment);  /*10 cycles*/                                       \
+        op(0x09); /*add hl, bc 11 cycles*/                                          \
+        if(preserve_bc) op(0xC1); /*pop bc*/                                        \
+    }                                                                               \
 }
 
 /*
-    AFTER:
+Adds increment to de register.
+BEFORE:
+    de = starting value
+AFTER:
+    de = starting value + increment
+    bc = increment (unless preserve_bc)
+*/
+#define op_add_de(increment, preserve_bc) {                                         \
+    if(increment == 0);                                                             \
+    /*yeah too lazy for for loops, probably a better way. curse c89*/               \
+    else if(increment == (CELL_TYPE)1) {op_inc_de();}                               \
+    else if (increment == (CELL_TYPE)2) {op_inc_de(); op_inc_de();}                 \
+    else if (increment == (CELL_TYPE)3) {op_inc_de(); op_inc_de(); op_inc_de();}    \
+    else if (increment == (CELL_TYPE)-1) {op_dec_de();}                             \
+    else if (increment == (CELL_TYPE)-2) {op_dec_de(); op_dec_de();}                \
+    else if (increment == (CELL_TYPE)-3) {op_dec_de(); op_dec_de(); op_dec_de();}   \
+    else {                                                                          \
+        op(0xEB); /*ex de, hl*/                                                     \
+        op_add_hl(increment, preserve_bc);                                          \
+        op(0xEB); /*ex de, hl*/                                                     \
+    }                                                                               \
+}
+
+/*
+Sets z flag if hl is zero
+BEFORE:
+    hl = value to check
+*/
+#define op_check_hl_zero() {            \
+    op(0x19);           /*add hl, de*/  \
+    op(0xB7);           /*or a*/        \
+    op_2_bytes(0xED52); /*sbc hl, de*/  \
+}
+
+/*
+Sets z flag if de is zero
+BEFORE:
+    de = value to check
+*/
+#define op_check_de_zero() {                        \
+    op(0xEB); /*ex de, hl*/                         \
+    op_check_hl_zero(jump_if_zero, jump_address);   \
+    op(0xEB); /*ex de, hl*/                         \
+}
+
+/*
+Loads the current cell address into hl
+AFTER:
     hl = current cell address
+*/
+#define op_load_cell_address_hl() { \
+    if(hl != CELL_PTR) {                    \
+        op_load_hl_address(&mem->cell_ptr); \
+        hl = CELL_PTR;                      \
+    }                                       \
+}
+
+/*
+Loads the value of the cell pointed to in hl into de
+BEFORE:
+    hl = current cell address
+AFTER:
     de = current cell value
 */
-#define op_load_current_cell_value_into_de()    \
-    if(hl != CURRENT_CELL) {                    \
-        if(hl != CELL_PTR)                      \
-            op_load_hl_address(&mem->cell_ptr); \
-        op_2_bytes(0xED17); /*ld de, (hl)*/     \
-    }
+#define op_load_cell_value_de() {           \
+    if(de != CELL_VALUE) {                  \
+        op_2_bytes(0xED17); /*ld de, (hl)*/ \
+        de = CELL_VALUE;                    \
+    }                                       \
+}
+
+/*
+Loads the value of the cell pointed to in hl into de
+BEFORE:
+    hl = current cell address
+AFTER:
+    hl = current cell value
+*/
+#define op_load_cell_value_hl() {       \
+    if(hl != CELL_VALUE) {                      \
+        op_2_bytes(0xED27); /*ld hl, (hl)*/     \
+        hl = CELL_VALUE;                        \
+    }                                           \
+}
+
+/*
+Saves de into (hl)
+BEFORE:
+    hl = current cell address
+    de = cell value
+*/
+#define op_save_cell_value_de() op_2_bytes(0xED1F); /*ld (hl), de*/
 
 enum reg_state {
-    ZERO,
+    JUNK,
     CELL_PTR,
-    CURRENT_CELL,
-    CELL_VALUE,
-    JUNK
+    CELL_VALUE
 };
 
+
+#define MAX_INSN 45644
+uint8_t insns[MAX_INSN]; //because malloc() can't allocate this much apparently
+
 /*
-    .SIS 0x40 nothing(?)
-    .LIS 0x49 writes 3 bytes
-    .SIL 0x52 nothing(?)
-    .LIL 0x5B writes 3 bytes
-
-    ld.sis ($1234), hl, loads 16-bit HL into [MB, $34, $12]
-
-    To be exact: it stores L in MB3512 and H in MB3513
-
-    we are in adl mode
-    we want lis
-
-    256 KB of RAM (154 KB user accessible), 4 MB of Flash ROM (3 MB user accessible)
-    wtf? why can't we malloc() more?
-
-    ld (hl),e \ inc hl \ ld (hl),d
-
-
-
-    ld hl, current_cell_ptr
-    ld de, (hl)
-    ex de, hl
-    ld bc, increment
-    add hl, bc
-    ex de, hl
-    ld (hl), de
-
-    hl = current_cell_ptr
-    de = current value
-
-
-    ex de, ,hl \ add hl, bc \ ex de, hl \ ld (hl), de
+    .SIS 0x40
+    .LIS 0x49
+    .SIL 0x52
+    .LIL 0x5B
 */
-
-uint8_t insns[45644];
-
-void compile_native(const Instruction_t *instructions, uint32_t instruction_length, uint8_t **native_code, size_t *native_length, struct Memory *mem, int *error) {
-    uint32_t i = 0;
-    uint32_t pc = 0;
-
-    uint8_t *code;
-
-    Stack_t stack;
-    uint32_t pc_backup = 0, corresponding = 0;
+void compile_native(const char *code, size_t len, bool optimize, uint8_t **native_code, size_t *native_length, struct Memory *mem, int *error) {
+	unsigned int i = 0, pc = 0;
 
     enum reg_state hl = JUNK, de = JUNK;
+    unsigned int bc;
 
-    //45644 bytes needed for fractal O.o
-    size_t memory = 45644;// 1024;
-
-    //*native_code = malloc(memory);
-    *native_code = insns;
-
-    if(native_code <= 0) {
-        *error = E_OUT_OF_MEMORY;
-        return;
-    }
-
+    Stack_t stack;
     stack_Create(&stack);
 
-    code = *native_code;
+    *native_code = insns;
 
-    op(0xE5); //push hl
-    op(0xD5); //push de
+    while(i < len) {
+        size_t consumed;
 
-    for (; i < instruction_length; i++) {
-        Instruction_t instruction = instructions[i];
-        //op(0);
-        switch (instruction.opcode) {
+        //have to split these two lines up due to a compiler error lol
+        //P3: Internal Error(0x83BAF1): \ Please contact Technical Support \ make: *** [obj/compiler.obj] Error -1
+        Instruction_t insn;
+        insn = next_insn(code, len, i, optimize, &consumed);
 
+        switch (insn.opcode) {
         case OP_ADD_CELL_POINTER:
 
-            if(hl != CELL_PTR)
-                op_load_hl_address(&mem->cell_ptr);
-            op_add_hl(instruction.operand * sizeof(CELL_TYPE), false);
+            op_load_cell_address_hl();
+            op_add_hl(insn.operand * sizeof(CELL_TYPE), false);
             op_write_hl_to_address(&mem->cell_ptr);
 
             hl = CELL_PTR;
             de = JUNK;
-            break;
-/*
-        case OP_SUB_CELL_POINTER:
-            if(hl != CELL_PTR)
-                op_load_hl_address(&mem->cell_ptr);
-            op_add_hl(-1 * instruction.operand * sizeof(CELL_TYPE), false);
-            op_write_hl_to_address(&mem->cell_ptr);
 
-            hl = CELL_PTR;
-            de = JUNK;
             break;
-*/
         case OP_ADD_CELL_VALUE:
 
-            
-            op_load_current_cell_value_into_de();
+            op_load_cell_address_hl();
+            op_load_cell_value_de();
 
-            op_add_de(instruction.operand, true);
+            op_add_de(insn.operand, false);
+            op_save_cell_value_de();
 
-            op_2_bytes(0xED1F); //ld (hl), de
-
-            hl = CURRENT_CELL;
+            hl = CELL_PTR;
             de = CELL_VALUE;
+
             break;
-/*
-        case OP_SUB_CELL_VALUE:
-        
-            op_load_current_cell_value_into_de();
-
-            op_add_de(-1 * instruction.operand, true);
-
-            op_2_bytes(0xED1F); //ld (hl), de
-
-            hl = CURRENT_CELL;
-            de = CELL_VALUE;
-            break;
-*/
         case OP_PRINT_CELL:
 
-            op_load_current_cell_value_into_de();
+            op_load_cell_address_hl();
+            op_load_cell_value_de();
 
             op(0xD5); //push de
             op(0xCD); //call ***
@@ -413,48 +427,49 @@ void compile_native(const Instruction_t *instructions, uint32_t instruction_leng
 
             hl = JUNK;
             de = CELL_VALUE;
-            
+
             break;
         case OP_INPUT_CELL:
+
+            //call the get input and store the value in de
             op(0xCD); //call ***
             op_3_bytes_little(bf_get_input);
 
             op(0xEB); //ex de, hl
-            op_load_hl_address(&mem->cell_ptr);
 
-            op_2_bytes(0xED1F); //ld (hl), de
+            //get the current cell ptr and store de in it
+            op_load_cell_address_hl();
+            op_save_cell_value_de();
             
-            hl = CURRENT_CELL;
+            hl = CELL_PTR;
             de = CELL_VALUE;
 
             break;
         case OP_OPEN_BRACKET:
+
             if(stack.top >= MAX_STACK_SIZE) {
                 if(error != NULL)
                     *error = E_STACK_OVERFLOW;
                 return;
             }
 
-            op_load_current_cell_value_into_de();
+            op_load_cell_address_hl();
+            op_load_cell_value_hl();
 
-            op(0xEB); //ex de, hl
+            op_check_hl_zero();
+            op_jp_z(0);
 
-            op_load_de(0); //seriously can we optimize this
-
-            op(0xB7); //or a (reset the carry flag)
-
-            op_2_bytes(0xED52); //sbc hl, de
-
-            op(0xCA); //jp z, ***
-            op_3_bytes_little(0); //placeholder
-
-            stack_Push(&stack, (uint32_t)(code + pc));
+            //push this address so the corresponding ] can fix the 3 byte jump address
+            stack_Push(&stack, (unsigned int)*native_code + pc);
 
             hl = CELL_VALUE;
-            de = ZERO;
+            //de has to be junk because if we jump to this location, the next instruciton has to load value fresh
+            de = JUNK;
 
             break;
-        case OP_CLOSE_BRACKET:
+        case OP_CLOSE_BRACKET: {
+
+            unsigned int pc_backup = 0, corresponding = 0;
 
             if(stack.top <= 0) {
                 if(error != NULL)
@@ -464,52 +479,45 @@ void compile_native(const Instruction_t *instructions, uint32_t instruction_leng
 
             corresponding = stack_Pop(&stack);
 
-            op_load_current_cell_value_into_de();
+            op_load_cell_address_hl();
+            op_load_cell_value_hl();
 
-            op(0xEB); //ex de, hl
+            op_check_hl_zero();
+            op_jp_nz(corresponding);
 
-            op_load_de(0); //seriously can we optimize this
-
-            op(0xB7); //or a (reset the carry flag)
-            op_2_bytes(0xED52); //sbc hl, de
-
-            op(0xC2); //jp nz, ***
-            op_3_bytes_little(corresponding);
-
+            //Go back and correct the 3 jump bytes of the corresponding [
             pc_backup = pc;
-            pc = corresponding - (uint32_t)code - 3;
-
-            op_3_bytes_little((uint32_t)code + pc_backup);
-
+            pc = corresponding - (unsigned int)*native_code - 3;
+            op_3_bytes_little((unsigned int)*native_code + pc_backup);
             pc = pc_backup;
 
             hl = CELL_VALUE;
-            de = ZERO;
-
-            break;
-        case OP_SET_ZERO:
-            if(hl != CELL_PTR)
-                op_load_hl_address(&mem->cell_ptr);
-
-            op_load_de(0);
-
-            op_2_bytes(0xED1F); //ld (hl), de
-
-            hl = CURRENT_CELL;
-            de = CELL_VALUE; //TODO: further optimizations here
+            //de has to be junk because if we jump to this location, the next instruciton has to load value fresh
+            de = JUNK;
 
             break;
         }
+        case OP_SET_ZERO:
+
+            if(hl != CELL_PTR)
+                op_load_hl_address(&mem->cell_ptr);
+            op_load_de(0);
+            op_2_bytes(0xED1F); //ld (hl), de
+
+            hl = CELL_PTR;
+            de = CELL_VALUE;
+
+            break;
+        }
+
+        i += consumed;
     }
 
-    op(0xD1); //pop de
-    op(0xE1); //pop hl
     op(0xC9); //ret
 
     *native_length = pc;
-    
+    *error = E_SUCCESS;
 }
-
 
 #ifdef __cplusplus
 }
