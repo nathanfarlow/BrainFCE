@@ -14,7 +14,7 @@
 
 #include "vm.h"
 #include "files.h"
-
+#include "gui.h"
 
 /*print string to screen. will remove when gui is added later*/
 void console_print(const char *str);
@@ -118,6 +118,9 @@ void main(void)  {
 
     Compiler_t compiler;
     struct VM vm;
+
+    gui_run();
+    return;
 
     comp_Create(&compiler, program, program_length);
     vm_Create(&vm);
