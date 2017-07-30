@@ -205,12 +205,12 @@ void compile_bytecode(const char *code, size_t len, bool optimize, Instruction_t
 #define op(opcode) {if(pc >= MAX_INSN) {*error = E_OUT_OF_MEMORY; return;} (*native_code)[pc++] = opcode;}
 
 
-#define op_2_bytes(integer) {op(((unsigned int)(integer) >> 8) & 0xFF);             /*high byte of integer*/    \
-                            op(((unsigned int)(integer) >> 0) & 0xFF);}             /*low byte of integer*/
+#define op_2_bytes(integer)         {op(((unsigned int)(integer) >> 8) & 0xFF);     /*high byte of integer*/    \
+                                    op(((unsigned int)(integer) >> 0) & 0xFF);}     /*low byte of integer*/
 
-#define op_3_bytes(integer) {op(((unsigned int)(integer) >> 16) & 0xFF);            /*highest byte of integer*/ \
-                            op(((unsigned int)(integer) >> 8) & 0xFF);              /*middle byte of integer*/  \
-                            op(((unsigned int)(integer) >> 0) & 0xFF);}             /*lowest byte of integer*/
+#define op_3_bytes(integer)         {op(((unsigned int)(integer) >> 16) & 0xFF);    /*highest byte of integer*/ \
+                                    op(((unsigned int)(integer) >> 8) & 0xFF);      /*middle byte of integer*/  \
+                                    op(((unsigned int)(integer) >> 0) & 0xFF);}     /*lowest byte of integer*/
 
 #define op_2_bytes_little(integer)  {op(((unsigned int)(integer) >> 0) & 0xFF);     /*low byte of integer*/     \
                                     op(((unsigned int)(integer) >> 8) & 0xFF)}      /*high byte of integer*/
@@ -229,6 +229,8 @@ void compile_bytecode(const char *code, size_t len, bool optimize, Instruction_t
 #define op_write_hl_to_address(address) {op(0x22); op_3_bytes_little(address)}      /*ld (***), hl*/
     
 #define op_load_de(integer) {op(0x11); op_3_bytes_little(integer);}                 /* ld de, *** */
+
+/*We can do optimizations on this, but the toolchain compiler does not support a line that long...*/
 #define op_load_bc(integer) {op(0x01); op_3_bytes_little(integer);}                 /* ld bc, *** */
 
 #define op_inc_hl() op(0x23) /*inc hl*/
@@ -303,10 +305,10 @@ Sets z flag if de is zero
 BEFORE:
     de = value to check
 */
-#define op_check_de_zero() {                        \
-    op(0xEB); /*ex de, hl*/                         \
-    op_check_hl_zero(jump_if_zero, jump_address);   \
-    op(0xEB); /*ex de, hl*/                         \
+#define op_check_de_zero() {    \
+    op(0xEB); /*ex de, hl*/     \
+    op_check_hl_zero();         \
+    op(0xEB); /*ex de, hl*/     \
 }
 
 /*
@@ -405,10 +407,20 @@ void compile_native(const char *code, size_t len, bool optimize, uint8_t **nativ
             break;
         case OP_ADD_CELL_VALUE:
 
-            op_load_cell_address_hl();
-            op_load_cell_value_de();
+            if(hl == CELL_VALUE) {
+                op_add_hl(insn.operand, false);
+                op(0xEB); //ex de, hl
+                hl = de;
+                op_load_cell_address_hl();
+            } else if(de == CELL_VALUE) {
+                op_load_cell_address_hl();
+                op_add_de(insn.operand, false);
+            } else {
+                op_load_cell_address_hl();
+                op_load_cell_value_de();
+                op_add_de(insn.operand, false);
+            }
 
-            op_add_de(insn.operand, false);
             op_save_cell_value_de();
 
             hl = CELL_PTR;
@@ -453,18 +465,23 @@ void compile_native(const char *code, size_t len, bool optimize, uint8_t **nativ
                 return;
             }
 
-            op_load_cell_address_hl();
-            op_load_cell_value_hl();
-
+            if(de == CELL_VALUE) {
+                op(0xEB); //ex de, hl
+            } else if(hl != CELL_VALUE) {
+                op_load_cell_address_hl();
+                op_load_cell_value_hl();
+            }
+            
             op_check_hl_zero();
             op_jp_z(0);
 
             //push this address so the corresponding ] can fix the 3 byte jump address
+            //stack_Push(&stack, de);
             stack_Push(&stack, (unsigned int)*native_code + pc);
 
+            //these values have to remain the same as the corresponding ] for when we jump
             hl = CELL_VALUE;
-            //de has to be junk because if we jump to this location, the next instruciton has to load value fresh
-            de = JUNK;
+            //de = JUNK;
 
             break;
         case OP_CLOSE_BRACKET: {
@@ -479,9 +496,13 @@ void compile_native(const char *code, size_t len, bool optimize, uint8_t **nativ
 
             corresponding = stack_Pop(&stack);
 
-            op_load_cell_address_hl();
-            op_load_cell_value_hl();
-
+            if(de == CELL_VALUE) {
+                op(0xEB); //ex de, hl
+            } else if(hl != CELL_VALUE) {
+                op_load_cell_address_hl();
+                op_load_cell_value_hl();
+            }
+            
             op_check_hl_zero();
             op_jp_nz(corresponding);
 
@@ -491,9 +512,9 @@ void compile_native(const char *code, size_t len, bool optimize, uint8_t **nativ
             op_3_bytes_little((unsigned int)*native_code + pc_backup);
             pc = pc_backup;
 
+            //these values have to remain the same as the corresponding [ for when we jump
             hl = CELL_VALUE;
-            //de has to be junk because if we jump to this location, the next instruciton has to load value fresh
-            de = JUNK;
+            //de = JUNK;
 
             break;
         }

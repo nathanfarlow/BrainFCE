@@ -1,9 +1,9 @@
 /*
  *--------------------------------------
- * Program Name: TI-84 PCE Brainfuck Interpreter
+ * Program Name: BrainfuckCE
  * Author: Nathan Farlow
- * License: WTFPL 
- * Description: Interprets brainfuck code
+ * License: WTFPL
+ * Description: Interprets and/or compiles brainfuck code
  *--------------------------------------
 */
 
@@ -41,7 +41,7 @@ const char *prog_triple_mult = "++++[-]++++++[->+++++[->++<]<]>>";
 /*should end with 0x5 in cell 2 (0 based)*/
 const char *prog_move = "+++++ >>[-]<<[->>+<<]";
 
-const char *test = "+++[->+<]";
+const char *test = "+++>[]+";
 
 #define DEBUG_NATIVE 0
 #define OPTIMIZE 1
@@ -115,7 +115,7 @@ void test_run_native(uint8_t *native_code, size_t native_length)
 
 void main(void)  {
 
-    const char *program = prog_fractal;
+    const char *program = test;
 
 
     const size_t size = strlen(program);
@@ -139,13 +139,13 @@ void main(void)  {
     test_run_native(native_code, native_length);
 
     //to set the cells back to 0 after the native already ran on it
-    vm_Cleanup(&vm);
-    vm_Create(&vm);
+    //vm_Cleanup(&vm);
+    //vm_Create(&vm);
 
-    test_compile_bytecode(program, size, OPTIMIZE, &vm.instructions, &bytecode_length, &error);
-    vm.num_insns = bytecode_length;
+    //test_compile_bytecode(program, size, OPTIMIZE, &vm.instructions, &bytecode_length, &error);
+    //vm.num_insns = bytecode_length;
 
-    test_run_interpreter(&vm);
+    //test_run_interpreter(&vm);
 
     //print the first 6 cells for debugging purposes
     debug_print_array(vm.mem.cells, 6);

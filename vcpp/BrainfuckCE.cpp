@@ -16,7 +16,7 @@ void test_compile_bytecode(const char *program, size_t code_length, bool optimiz
     compile_bytecode(program, code_length, optimize, bytecode, bytecode_length, error);
 
     if (*error != E_SUCCESS) {
-        std::cout << "Bytecode compile error " << error << std::endl;
+        std::cout << "Bytecode compile error " << *error << std::endl;
         pause();
     }
 }
@@ -26,7 +26,7 @@ void test_compile_native(const char *program, size_t code_length, bool optimize,
     compile_native(program, code_length, optimize, native_code, native_length, mem, error);
 
     if (*error != E_SUCCESS) {
-        std::cout << "Native compile error " << error << std::endl;
+        std::cout << "Native compile error " << *error << std::endl;
         pause();
     }
 }
@@ -73,7 +73,7 @@ const char *test = "+++[->+<]";
 
 void main(void) {
 
-    const char *program = test;
+    const char *program = fractal;
     const size_t size = strlen(program);
 
     struct VM vm;
