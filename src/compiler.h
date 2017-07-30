@@ -62,7 +62,8 @@ void mem_Create(struct Memory *mem);
 enum RegState {
     JUNK,
     CELL_PTR,
-    CELL_VALUE
+    CELL_VALUE,
+    NUMBER
 };
 
 typedef struct Compiler {
@@ -73,8 +74,8 @@ typedef struct Compiler {
 
     unsigned int pc;
 
-    enum RegState hl, de;
-    unsigned int bc;
+	enum RegState hl, de, bc;
+    unsigned int bc_val;
 
     Stack_t stack;
 

@@ -158,6 +158,9 @@ void op_3_bytes_little(Compiler_t *c, unsigned int integer) {
 #define op_inc_de(c) op(c, 0x13) /*inc de*/
 #define op_dec_de(c) op(c, 0x1B) /*dec de*/
 
+#define op_inc_bc(c) op(c, 0x03) /*inc bc*/
+#define op_dec_bc(c) op(c, 0x0B) /*dec bc*/
+
 /*
 Sets z flag if hl is zero
 BEFORE:
@@ -188,11 +191,23 @@ BEFORE:
 */
 #define op_save_de_to_hl_address(c) op_2_bytes_big(c, 0xED1F) /*ld (hl), de*/
 
-/*TODO: optimizations here*/
 /* ld bc, *** */
-void op_load_bc(Compiler_t *c, unsigned int integer) {
-    op(c, 0x01);
-    op_3_bytes_little(c, integer);
+void op_load_bc(Compiler_t *c, unsigned int integer, bool preserve_bc) {
+    if(c->bc == NUMBER && integer == c->bc_val);
+    else if(c->bc == NUMBER && integer - c->bc_val == 1) {op_inc_bc(c);}
+    else if(c->bc == NUMBER && integer - c->bc_val == 2) {op_inc_bc(c); op_inc_bc(c);}
+    else if(c->bc == NUMBER && integer - c->bc_val == 3) {op_inc_bc(c); op_inc_bc(c); op_inc_bc(c);}
+    else if(c->bc == NUMBER && integer - c->bc_val == -1) {op_dec_bc(c);}
+    else if(c->bc == NUMBER && integer - c->bc_val == -2) {op_dec_bc(c); op_dec_bc(c);}
+    else if(c->bc == NUMBER && integer - c->bc_val == -3) {op_dec_bc(c); op_dec_bc(c); op_dec_bc(c);}
+    else {
+        op(c, 0x01);
+        op_3_bytes_little(c, integer);
+        if(!preserve_bc)
+            c->bc = NUMBER;
+    }
+    if(!preserve_bc)
+        c->bc_val = integer;
 }
 
 /*
@@ -214,7 +229,7 @@ void op_add_hl(Compiler_t *c, unsigned int increment, bool preserve_bc) {
     else if(increment == -3) {op_dec_hl(c); op_dec_hl(c); op_dec_hl(c);}
     else {
         if(preserve_bc) op(c, 0xC5);   //push bc
-        op_load_bc(c, increment);
+        op_load_bc(c, increment, preserve_bc);
         op(c, 0x09);                   //add hl, bc
         if(preserve_bc) op(c, 0xC1);   //pop bc
     }
@@ -300,7 +315,9 @@ void comp_Create(Compiler_t *c, const char *program, size_t program_length) {
 
     c->hl = JUNK;
     c->de = JUNK;
-    c->bc = 0;
+    c->bc = JUNK;
+
+    c->bc_val = 0;
 
     stack_Create(&c->stack);
 }
@@ -449,6 +466,8 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
 
             op(c, 0xEB); //ex de, hl
 
+            c->hl = JUNK;
+
             //get the current cell ptr and store de in it
             op_load_cell_address_hl(c, mem);
             op_save_de_to_hl_address(c);
@@ -481,7 +500,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
             //these values have to remain the same as the corresponding ] for when we jump
             c->hl = CELL_VALUE;
             c->de = JUNK;
-
+            c->bc = JUNK;
             break;
         case OP_CLOSE_BRACKET: {
 
@@ -512,8 +531,8 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
 
             //these values have to remain the same as the corresponding [ for when we jump
             c->hl = CELL_VALUE;
-            //c->de = JUNK;
-
+            c->de = JUNK;
+            c->bc = JUNK;
             break;
         }
         case OP_SET_ZERO:
