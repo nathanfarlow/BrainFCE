@@ -12,9 +12,15 @@ void vm_Create(struct VM *vm) {
 }
 
 int vm_Compile(struct VM *vm, const char *code, size_t len, bool optimize) {
-    int error;
-    compile_bytecode(code, len, true, &vm->instructions, &vm->num_insns, &error);
-    return error;
+    Compiler_t compiler;
+
+    comp_Create(&compiler, code, len);
+    comp_CompileBytecode(&compiler, optimize);
+
+    vm->instructions = compiler.code.bytecode;
+    vm->num_insns = compiler.code_length;
+
+    return compiler.error;
 }
 
 void vm_Cleanup(struct VM *vm) {

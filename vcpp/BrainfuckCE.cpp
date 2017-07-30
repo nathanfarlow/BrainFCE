@@ -11,22 +11,20 @@ extern "C" {
 void print_array(CELL_TYPE *arr, size_t size);
 void pause();
 
-void test_compile_bytecode(const char *program, size_t code_length, bool optimize, Instruction_t **bytecode, size_t *bytecode_length, int *error)
-{
-    compile_bytecode(program, code_length, optimize, bytecode, bytecode_length, error);
+void test_compile_bytecode(Compiler_t *c, bool optimize) {
+	comp_CompileBytecode(c, optimize);
 
-    if (*error != E_SUCCESS) {
-        std::cout << "Bytecode compile error " << *error << std::endl;
+    if (c->error!= E_SUCCESS) {
+        std::cout << "Bytecode compile error " << c->error << std::endl;
         pause();
     }
 }
 
-void test_compile_native(const char *program, size_t code_length, bool optimize, uint8_t **native_code, struct Memory *mem, size_t *native_length, int *error)
-{
-    compile_native(program, code_length, optimize, native_code, native_length, mem, error);
+void test_compile_native(Compiler_t *c, struct Memory *mem, bool optimize) {
+	comp_CompileNative(c, mem, optimize);
 
-    if (*error != E_SUCCESS) {
-        std::cout << "Native compile error " << *error << std::endl;
+    if (c->error != E_SUCCESS) {
+        std::cout << "Native compile error " << c->error << std::endl;
         pause();
     }
 }
@@ -46,7 +44,6 @@ void test_run_interpreter(struct VM *vm) {
         }
     }
 
-    vm_Cleanup(vm);
     std::clock_t end = std::clock();
 
     std::cout << std::endl;
@@ -73,27 +70,27 @@ const char *test = "+++[->+<]";
 
 void main(void) {
 
-    const char *program = fractal;
-    const size_t size = strlen(program);
+	const char *program = hello_world;
+	const size_t program_length = strlen(program);
 
-    struct VM vm;
+	Compiler_t compiler;
+	struct VM vm;
 
-    size_t bytecode_length;
+	comp_Create(&compiler, program, program_length);
+	vm_Create(&vm);
 
-    int error;
+	test_compile_native(&compiler, &vm.mem, true);
+	comp_CleanupNative(&compiler);
 
-    uint8_t *native_code;
-    size_t native_length;
+	comp_Create(&compiler, program, program_length);
+	test_compile_bytecode(&compiler, true);
 
-    vm_Create(&vm);
-
-    test_compile_bytecode(program, size, true, &vm.instructions, &bytecode_length, &error);
-    vm.num_insns = bytecode_length;
-
-    test_compile_native(program, size, true, &native_code, &vm.mem, &native_length, &error);
+	vm.instructions = compiler.code.bytecode;
+	vm.num_insns = compiler.code_length;
 
     test_run_interpreter(&vm);
 
+	comp_CleanupBytecode(&compiler);
 
     pause();
 }
