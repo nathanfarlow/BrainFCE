@@ -5,7 +5,7 @@ extern "C" {
 #include "stack.h"
 
 void stack_Create(Stack_t *stack) {
-    stack->top = 0; //no chances
+    stack->top = 0;
 }
 void stack_Push(Stack_t *stack, STACK_TYPE value) {
     stack->stack[stack->top++] = value;

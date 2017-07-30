@@ -46,16 +46,16 @@ const char *test = "+++>[]+";
 #define DEBUG_NATIVE 0
 #define OPTIMIZE 1
 
-void test_compile_bytecode(const char *program, size_t code_length, bool optimize, Instruction_t **bytecode, size_t *bytecode_length, int *error) {
+void test_compile_bytecode(Compiler_t *c, bool optimize) {
 
     if(optimize) console_print("Compiling optimized bytecode...\n");
     else console_print("Compiling unoptimized bytecode...\n");
 
-    compile_bytecode(program, code_length, optimize, bytecode, bytecode_length, error);
+    comp_CompileBytecode(c, optimize);
 
-    if (*error != E_SUCCESS) {
+    if (c->error != E_SUCCESS) {
         char buffer[30];
-        sprintf(buffer, "Bytecode compile error %i\0", *error);
+        sprintf(buffer, "Bytecode compile error %i\0", c->error);
         console_print(buffer);
         pause();
     } else {
@@ -63,16 +63,16 @@ void test_compile_bytecode(const char *program, size_t code_length, bool optimiz
     }
 }
 
-void test_compile_native(const char *program, size_t code_length, bool optimize, uint8_t **native_code, struct Memory *mem, size_t *native_length, int *error) {
+void test_compile_native(Compiler_t *c, struct Memory *mem, bool optimize) {
 
     if(optimize) console_print("Compiling optimized native...\n");
     else console_print("Compiling unoptimized native...\n");
 
-    compile_native(program, code_length, optimize, native_code, native_length, mem, error);
+    comp_CompileNative(c, mem, optimize);
 
-    if (*error != E_SUCCESS) {
+    if (c->error != E_SUCCESS) {
         char buffer[30];
-        sprintf(buffer, "Native compile error %i\0", *error);
+        sprintf(buffer, "Native compile error %i\0", c->error);
         console_print(buffer);
         pause();
     } else {
@@ -99,14 +99,14 @@ void test_run_interpreter(struct VM *vm)
     console_print("\nDone.\n\n");
 }
 
-void test_run_native(uint8_t *native_code, size_t native_length)
+void test_run_native(Compiler_t *c)
 {
     console_print("Executing native...\n\n");
 
     if(DEBUG_NATIVE)
-        dbg_SetBreakpoint(native_code);
+        dbg_SetBreakpoint(c->code.native);
 
-    (* ((void(*)()) native_code)) ();
+    (* ((void(*)()) c->code.native)) ();
 
     //free(native_code);
 
@@ -115,42 +115,38 @@ void test_run_native(uint8_t *native_code, size_t native_length)
 
 void main(void)  {
 
-    const char *program = test;
+    const char *program = prog_fractal;
+    const size_t program_length = strlen(program);
 
-
-    const size_t size = strlen(program);
-
+    Compiler_t compiler;
     struct VM vm;
 
-    size_t bytecode_length;
-
-    int error;
-
-    uint8_t *native_code;
-    size_t native_length;
-
+    comp_Create(&compiler, program, program_length);
     vm_Create(&vm);
 
     os_ClrHome();
     fill_screen(0xFF);
 
-    test_compile_native(program, size, OPTIMIZE, &native_code, &vm.mem, &native_length, &error);
-    
-    test_run_native(native_code, native_length);
 
-    //to set the cells back to 0 after the native already ran on it
-    //vm_Cleanup(&vm);
-    //vm_Create(&vm);
+    test_compile_native(&compiler, &vm.mem, true);
+    test_run_native(&compiler);
 
-    //test_compile_bytecode(program, size, OPTIMIZE, &vm.instructions, &bytecode_length, &error);
-    //vm.num_insns = bytecode_length;
+    comp_CleanupNative(&compiler);
 
-    //test_run_interpreter(&vm);
+/*
+    comp_Create(&compiler, program, program_length);
+    test_compile_bytecode(&compiler, true);
+
+    vm.instructions = compiler.code.bytecode;
+    vm.num_insns = compiler.code_length;
+
+    test_run_interpreter(&vm);
+
+    comp_CleanupBytecode(&compiler);
+*/
 
     //print the first 6 cells for debugging purposes
     debug_print_array(vm.mem.cells, 6);
-    
-    vm_Cleanup(&vm);
 
     pause();
 }

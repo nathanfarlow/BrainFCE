@@ -59,11 +59,45 @@ struct Memory {
 
 void mem_Create(struct Memory *mem);
 
+enum RegState {
+    JUNK,
+    CELL_PTR,
+    CELL_VALUE
+};
+
+typedef struct Compiler {
+    const char *program;
+    size_t program_length;
+
+    int error;
+
+    unsigned int pc;
+
+    enum RegState hl, de;
+    unsigned int bc;
+
+    Stack_t stack;
+
+    size_t code_length;
+    union {
+        Instruction_t *bytecode;
+        uint8_t *native;
+	} code;
+} Compiler_t;
+
+void comp_Create(Compiler_t *c, const char *program, size_t program_length);
+
+void comp_CompileBytecode(Compiler_t *c, bool optimize);
+void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize);
+
+void comp_CleanupBytecode(Compiler_t *c);
+void comp_CleanupNative(Compiler_t *c);
+
 //Functions that are called from the native and interpreted program
 void bf_print_cell(CELL_TYPE cell);
 CELL_TYPE bf_get_input();
 
-void compile_bytecode(const char *code, size_t len, bool optimize, Instruction_t **instructions_ret, size_t *instructions_length, int *error);
-void compile_native(const char *code, size_t len, bool optimize, uint8_t **native_code, size_t *native_length, struct Memory *mem, int *error);
+//void compile_bytecode(const char *code, size_t len, bool optimize, Instruction_t **instructions_ret, size_t *instructions_length, int *error);
+//void compile_native(const char *code, size_t len, bool optimize, uint8_t **native_code, size_t *native_length, struct Memory *mem, int *error);
 
 #endif
