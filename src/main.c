@@ -20,8 +20,6 @@
 void console_print(const char *str);
 /*Used to check if cell contents are correct when debugging. will remove*/
 void debug_print_array(CELL_TYPE *arr, size_t size);
-/*Fill the screen with a given color*/
-void fill_screen(uint8_t color) { memset(lcd_Ram, color, LCD_SIZE); }
 
 void pause() { while(!os_GetCSC()); }
 
@@ -124,9 +122,6 @@ void main(void)  {
 
     comp_Create(&compiler, program, program_length);
     vm_Create(&vm);
-
-    os_ClrHome();
-    fill_screen(0xFF);
 
 //Native compiler and runing tests
     test_compile_native(&compiler, &vm.mem, true);
