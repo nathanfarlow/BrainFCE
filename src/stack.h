@@ -10,7 +10,7 @@
 #endif
 
 #ifdef __TICE__
-#define MAX_STACK_SIZE 50
+#define MAX_STACK_SIZE 100
 #else
 #define MAX_STACK_SIZE 2048
 #endif

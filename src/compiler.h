@@ -97,7 +97,4 @@ void comp_CleanupNative(Compiler_t *c);
 void bf_print_cell(CELL_TYPE cell);
 CELL_TYPE bf_get_input();
 
-//void compile_bytecode(const char *code, size_t len, bool optimize, Instruction_t **instructions_ret, size_t *instructions_length, int *error);
-//void compile_native(const char *code, size_t len, bool optimize, uint8_t **native_code, size_t *native_length, struct Memory *mem, int *error);
-
 #endif

@@ -140,56 +140,60 @@ void op_3_bytes_little(Compiler_t *c, unsigned int integer) {
     op(c, ((unsigned int)(integer) >> 16) & 0xFF);//highest byte of integer
 }
 
-//I would make the following functions inline but our toolchain compiler doesn't support that...
+//I would make the following inline functions but our toolchain compiler doesn't support that...
 
-/*jp z, *** */
-void op_jp_z(Compiler_t *c, unsigned int jump_address) {
-    op(c, 0xCA);
-    op_3_bytes_little(c, jump_address);
+#define op_jp_z(c, jump_address)   {op(c, 0xCA); op_3_bytes_little(c, jump_address);}       /*jp z, *** */
+#define op_jp_nz(c, jump_address)  {op(c, 0xC2); op_3_bytes_little(c, jump_address);}       /*jp nz, *** */
+
+#define op_load_hl_address(c, integer) {op(c, 0x2A); op_3_bytes_little(c, integer);}        /* ld hl, (***) */
+#define op_load_hl(c, integer)         {op(c, 0x21); op_3_bytes_little(c, integer);}        /*ld hl, *** */
+
+#define op_write_hl_to_address(c, address) {op(c, 0x22); op_3_bytes_little(c, address);}    /*ld (***), hl*/
+    
+#define op_load_de(c, integer) {op(c, 0x11); op_3_bytes_little(c, integer);}                /* ld de, *** */
+
+#define op_inc_hl(c) op(c, 0x23) /*inc hl*/
+#define op_dec_hl(c) op(c, 0x2B) /*dec hl*/
+
+#define op_inc_de(c) op(c, 0x13) /*inc de*/
+#define op_dec_de(c) op(c, 0x1B) /*dec de*/
+
+/*
+Sets z flag if hl is zero
+BEFORE:
+    hl = value to check
+*/
+#define op_check_hl_zero(c) {                   \
+    op(c, 0x19);                /*add hl, de*/  \
+    op(c, 0xB7);                /*or a*/        \
+    op_2_bytes_big(c, 0xED52);  /*sbc hl, de*/  \
 }
 
-/*jp nz, *** */
-void op_jp_nz(Compiler_t *c, unsigned int jump_address) {
-    op(c, 0xC2);
-    op_3_bytes_little(c, jump_address);
+/*
+Sets z flag if de is zero
+BEFORE:
+    de = value to check
+*/
+#define op_check_de_zero(c) {   \
+    op(c, 0xEB); /*ex de, hl*/  \
+    op_check_hl_zero(c);        \
+    op(c, 0xEB); /*ex de, hl*/  \
 }
 
-/* ld hl, (***) */
-void op_load_hl_address(Compiler_t *c, unsigned int integer) {
-    op(c, 0x2A); 
-    op_3_bytes_little(c, integer);
-}
+/*
+Saves de into (hl)
+BEFORE:
+    hl = current cell address
+    de = cell value
+*/
+#define op_save_de_to_hl_address(c) op_2_bytes_big(c, 0xED1F) /*ld (hl), de*/
 
-/*ld hl, *** */
-void op_load_hl(Compiler_t *c, unsigned int integer) {
-    op(c, 0x21);
-    op_3_bytes_little(c, integer);
-}
-
-/*ld (***), hl*/
-void op_write_hl_to_address(Compiler_t *c, unsigned int address) {
-    op(c, 0x22);
-    op_3_bytes_little(c, address);
-}
-
-/* ld de, *** */
-void op_load_de(Compiler_t *c, unsigned int integer) {
-    op(c, 0x11);
-    op_3_bytes_little(c, integer);
-}
-
-/*We can do optimizations on this, but the toolchain compiler does not support a line that long...*/
+/*TODO: optimizations here*/
 /* ld bc, *** */
 void op_load_bc(Compiler_t *c, unsigned int integer) {
     op(c, 0x01);
     op_3_bytes_little(c, integer);
 }
-
-void op_inc_hl(Compiler_t *c) { op(c, 0x23); } /*inc hl*/
-void op_dec_hl(Compiler_t *c) { op(c, 0x2B); } /*dec hl*/
-
-void op_inc_de(Compiler_t *c) { op(c, 0x13); } /*inc de*/
-void op_dec_de(Compiler_t *c) { op(c, 0x1B); } /*dec de*/
 
 /*
 Adds increment to hl register.
@@ -241,28 +245,6 @@ void op_add_de(Compiler_t *c, unsigned int increment, bool preserve_bc) {
 }
 
 /*
-Sets z flag if hl is zero
-BEFORE:
-    hl = value to check
-*/
-void op_check_hl_zero(Compiler_t *c) {
-    op(c, 0x19);				//add hl, de
-    op(c, 0xB7);				//or a
-    op_2_bytes_big(c, 0xED52);	//sbc hl, de
-}
-
-/*
-Sets z flag if de is zero
-BEFORE:
-    de = value to check
-*/
-void op_check_de_zero(Compiler_t *c) {
-    op(c, 0xEB); //ex de, hl
-    op_check_hl_zero(c);
-    op(c, 0xEB); //ex de, hl
-}
-
-/*
 Loads the current cell address into hl
 AFTER:
     hl = current cell address
@@ -301,17 +283,6 @@ void op_load_cell_value_hl(Compiler_t *c) {
         c->hl = CELL_VALUE;
     }
 }
-
-/*
-Saves de into (hl)
-BEFORE:
-    hl = current cell address
-    de = cell value
-*/
-void op_save_de_to_hl_address(Compiler_t *c) {
-    op_2_bytes_big(c, 0xED1F); //ld (hl), de
-}
-
 
 void mem_Create(struct Memory *mem) {
     memset(mem->cells, 0, sizeof(mem->cells));
@@ -450,7 +421,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
                 op_add_de(c, insn.operand, false);
             }
 
-			op_save_de_to_hl_address(c);
+            op_save_de_to_hl_address(c);
 
             c->hl = CELL_PTR;
             c->de = CELL_VALUE;
@@ -480,7 +451,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
 
             //get the current cell ptr and store de in it
             op_load_cell_address_hl(c, mem);
-			op_save_de_to_hl_address(c);
+            op_save_de_to_hl_address(c);
             
             c->hl = CELL_PTR;
             c->de = CELL_VALUE;
@@ -489,7 +460,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
         case OP_OPEN_BRACKET:
 
             if(c->stack.top >= MAX_STACK_SIZE) {
-				c->error = E_STACK_OVERFLOW;
+                c->error = E_STACK_OVERFLOW;
                 return;
             }
 
@@ -508,7 +479,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
             stack_Push(&c->stack, (unsigned int)c->code.native + c->pc);
 
             //these values have to remain the same as the corresponding ] for when we jump
-			c->hl = CELL_VALUE;
+            c->hl = CELL_VALUE;
             c->de = JUNK;
 
             break;
@@ -517,7 +488,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
             unsigned int pc_backup = 0, corresponding = 0;
 
             if(c->stack.top <= 0) {
-				c->error = E_STACK_UNDERFLOW;
+                c->error = E_STACK_UNDERFLOW;
                 return;
             }
 
@@ -535,12 +506,12 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
 
             //Go back and correct the 3 jump bytes of the corresponding [
             pc_backup = c->pc;
-			c->pc = corresponding - (unsigned int)c->code.native - 3;
+            c->pc = corresponding - (unsigned int)c->code.native - 3;
             op_3_bytes_little(c, (unsigned int)c->code.native + pc_backup);
-			c->pc = pc_backup;
+            c->pc = pc_backup;
 
             //these values have to remain the same as the corresponding [ for when we jump
-			c->hl = CELL_VALUE;
+            c->hl = CELL_VALUE;
             //c->de = JUNK;
 
             break;
@@ -552,8 +523,8 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
             op_load_de(c, 0);
             op_2_bytes_big(c, 0xED1F); //ld (hl), de
 
-			c->hl = CELL_PTR;
-			c->de = CELL_VALUE;
+            c->hl = CELL_PTR;
+            c->de = CELL_VALUE;
 
             break;
         }
@@ -570,181 +541,8 @@ void comp_CleanupBytecode(Compiler_t *c) {
         free(c->code.bytecode);
 }
 void comp_CleanupNative(Compiler_t *c) {
-    //We don't malloc() the native array so we won't free it
+    //We don't malloc() the native array so we won't free it (for now anyway)
 }
-
-
-
-
-
-
-
-/*
-void compile_native(const char *code, size_t len, bool optimize, uint8_t **native_code, size_t *native_length, struct Memory *mem, int *error) {
-    unsigned int i = 0, pc = 0;
-
-    enum reg_state hl = JUNK, de = JUNK;
-    unsigned int bc;
-
-    Stack_t stack;
-    stack_Create(&stack);
-
-    *native_code = insns;
-
-    while(i < len) {
-        size_t consumed;
-
-        //have to split these two lines up due to a compiler error lol
-        //P3: Internal Error(0x83BAF1): \ Please contact Technical Support \ make: *** [obj/compiler.obj] Error -1
-        Instruction_t insn;
-        insn = next_insn(code, len, i, optimize, &consumed);
-
-        switch (insn.opcode) {
-        case OP_ADD_CELL_POINTER:
-
-            op_load_cell_address_hl();
-            op_add_hl(insn.operand * sizeof(CELL_TYPE), false);
-            op_write_hl_to_address(&mem->cell_ptr);
-
-            hl = CELL_PTR;
-            de = JUNK;
-
-            break;
-        case OP_ADD_CELL_VALUE:
-
-            if(hl == CELL_VALUE) {
-                op_add_hl(insn.operand, false);
-                op(0xEB); //ex de, hl
-                hl = de;
-                op_load_cell_address_hl();
-            } else if(de == CELL_VALUE) {
-                op_load_cell_address_hl();
-                op_add_de(insn.operand, false);
-            } else {
-                op_load_cell_address_hl();
-                op_load_cell_value_de();
-                op_add_de(insn.operand, false);
-            }
-
-            op_save_cell_value_de();
-
-            hl = CELL_PTR;
-            de = CELL_VALUE;
-
-            break;
-        case OP_PRINT_CELL:
-
-            op_load_cell_address_hl();
-            op_load_cell_value_de();
-
-            op(0xD5); //push de
-            op(0xCD); //call ***
-            op_3_bytes_little(bf_print_cell);
-            op(0xD1); //pop de
-
-            hl = JUNK;
-            de = CELL_VALUE;
-
-            break;
-        case OP_INPUT_CELL:
-
-            //call the get input and store the value in de
-            op(0xCD); //call ***
-            op_3_bytes_little(bf_get_input);
-
-            op(0xEB); //ex de, hl
-
-            //get the current cell ptr and store de in it
-            op_load_cell_address_hl();
-            op_save_cell_value_de();
-            
-            hl = CELL_PTR;
-            de = CELL_VALUE;
-
-            break;
-        case OP_OPEN_BRACKET:
-
-            if(stack.top >= MAX_STACK_SIZE) {
-                if(error != NULL)
-                    *error = E_STACK_OVERFLOW;
-                return;
-            }
-
-            if(de == CELL_VALUE) {
-                op(0xEB); //ex de, hl
-            } else if(hl != CELL_VALUE) {
-                op_load_cell_address_hl();
-                op_load_cell_value_hl();
-            }
-            
-            op_check_hl_zero();
-            op_jp_z(0);
-
-            //push this address so the corresponding ] can fix the 3 byte jump address
-            //stack_Push(&stack, de);
-            stack_Push(&stack, (unsigned int)*native_code + pc);
-
-            //these values have to remain the same as the corresponding ] for when we jump
-            hl = CELL_VALUE;
-            //de = JUNK;
-
-            break;
-        case OP_CLOSE_BRACKET: {
-
-            unsigned int pc_backup = 0, corresponding = 0;
-
-            if(stack.top <= 0) {
-                if(error != NULL)
-                    *error = E_STACK_UNDERFLOW;
-                return;
-            }
-
-            corresponding = stack_Pop(&stack);
-
-            if(de == CELL_VALUE) {
-                op(0xEB); //ex de, hl
-            } else if(hl != CELL_VALUE) {
-                op_load_cell_address_hl();
-                op_load_cell_value_hl();
-            }
-            
-            op_check_hl_zero();
-            op_jp_nz(corresponding);
-
-            //Go back and correct the 3 jump bytes of the corresponding [
-            pc_backup = pc;
-            pc = corresponding - (unsigned int)*native_code - 3;
-            op_3_bytes_little((unsigned int)*native_code + pc_backup);
-            pc = pc_backup;
-
-            //these values have to remain the same as the corresponding [ for when we jump
-            hl = CELL_VALUE;
-            //de = JUNK;
-
-            break;
-        }
-        case OP_SET_ZERO:
-
-            if(hl != CELL_PTR)
-                op_load_hl_address(&mem->cell_ptr);
-            op_load_de(0);
-            op_2_bytes(0xED1F); //ld (hl), de
-
-            hl = CELL_PTR;
-            de = CELL_VALUE;
-
-            break;
-        }
-
-        i += consumed;
-    }
-
-    op(0xC9); //ret
-
-    *native_length = pc;
-    *error = E_SUCCESS;
-}
-*/
 
 #ifdef __cplusplus
 }
