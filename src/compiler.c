@@ -501,6 +501,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
             c->hl = CELL_VALUE;
             c->de = JUNK;
             c->bc = JUNK;
+
             break;
         case OP_CLOSE_BRACKET: {
 
@@ -533,6 +534,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
             c->hl = CELL_VALUE;
             c->de = JUNK;
             c->bc = JUNK;
+            
             break;
         }
         case OP_SET_ZERO:
