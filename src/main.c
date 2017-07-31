@@ -118,6 +118,7 @@ void main(void)  {
     struct VM vm;
 
     gui_run();
+    gui_cleanup();
     return;
 
     comp_Create(&compiler, program, program_length);

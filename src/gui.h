@@ -2,5 +2,6 @@
 #define GUI_H_
 
 void gui_run();
+void gui_cleanup();
 
 #endif

@@ -1,30 +1,64 @@
 #include "files.h"
 
 #include <stdlib.h>
+#include <string.h>
+
+#include <debug.h>
 
 void list_Create(FileList_t *list) {
 
-    uint8_t *search_pos = NULL;
-    char *var_name;
-    const char search_string[] = {0xBF, 0xBA, 0xBE};
+    uint16_t i = 0;
 
-    uint16_t index = 0;
+    char **temp_arr;
+
+    char *var_name;
+    uint8_t *search_pos = NULL;
 
     list->amount = 0;
-    while((var_name = ti_Detect(&search_pos, search_string)) != NULL) {
+    while((var_name = ti_DetectVar(&search_pos, NULL, TI_PRGM_TYPE)) != NULL) {
         list->amount++;
     }
 
-    list->files = malloc(list->amount * sizeof(char*));
+    //to account for the ! and # programs
+    list->amount -= 2;
+    temp_arr = malloc(list->amount * sizeof(char*));
 
     search_pos = NULL;
-    while((var_name = ti_Detect(&search_pos, search_string)) != NULL) {
-        list->files[index++] = var_name;
+    while((var_name = ti_DetectVar(&search_pos, NULL, TI_PRGM_TYPE)) != NULL) {
+        if(i > 1) {
+            char *tmp = (char*)malloc(strlen(var_name) + 1);
+
+            strcpy(tmp, var_name);
+
+            temp_arr[i - 2] = tmp;
+        }
+
+        i++;
+        
     }
 
+    //sort temp_arr alphabetically and put in list->files
+    list->files = malloc(list->amount * sizeof(char*));
+
+    for(i = 0; i < list->amount; i++) {
+        uint16_t j;
+        uint16_t smallest = 0;
+        for(j = 0; j < list->amount; j++) {
+            if(strcmp(temp_arr[j], temp_arr[smallest]) < 0)
+                smallest = j;
+        }
+        list->files[i] = temp_arr[smallest];
+        free(temp_arr[smallest]);
+        temp_arr[smallest] = NULL;
+    }
+
+    free(temp_arr);
 }
 
 void list_Cleanup(FileList_t *list) {
+    uint16_t i = 0;
+    for(i = 0; i < list->amount; i++)
+        free(list->files[i]);
     free(list->files);
 }
 
