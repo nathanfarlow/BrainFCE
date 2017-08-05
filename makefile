@@ -7,7 +7,7 @@
 # ** Add all shared library names to L **
 # ----------------------------
 
-NAME        ?= DEMO
+NAME        ?= BRAINF
 DEBUGMODE   ?= DEBUG
 COMPRESSED  ?= NO
 ICON        ?= iconc.png
