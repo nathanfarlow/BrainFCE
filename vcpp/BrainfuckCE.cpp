@@ -5,7 +5,7 @@
 #include <ctime>
 
 extern "C" {
-#include "../src/vm.h"
+#include "../src/bf/vm.h"
 }
 
 void print_array(CELL_TYPE *arr, size_t size);

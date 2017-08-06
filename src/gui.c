@@ -1,17 +1,12 @@
 #include "gui.h"
 
-
-
 #include <tice.h>
 #include <graphx.h>
 
-#include <math.h>
 #include <string.h> //for memset
 
-#include <debug.h>
-
 #include "files.h"
-#include "vm.h"
+#include "bf/vm.h"
 
 void pause();
 

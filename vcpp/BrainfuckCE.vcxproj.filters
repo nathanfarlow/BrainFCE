@@ -18,24 +18,24 @@
     <ClCompile Include="BrainfuckCE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\compiler.c">
+    <ClCompile Include="..\src\bf\compiler.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\stack.c">
+    <ClCompile Include="..\src\bf\stack.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\vm.c">
+    <ClCompile Include="..\src\bf\vm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\compiler.h">
+    <ClInclude Include="..\src\bf\compiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\stack.h">
+    <ClInclude Include="..\src\bf\stack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\vm.h">
+    <ClInclude Include="..\src\bf\vm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

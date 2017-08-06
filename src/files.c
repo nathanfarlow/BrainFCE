@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <debug.h>
-
 void list_Create(FileList_t *list) {
 
     uint16_t i = 0;

@@ -139,15 +139,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\compiler.c" />
-    <ClCompile Include="..\src\stack.c" />
-    <ClCompile Include="..\src\vm.c" />
+    <ClCompile Include="..\src\bf\compiler.c" />
+    <ClCompile Include="..\src\bf\stack.c" />
+    <ClCompile Include="..\src\bf\vm.c" />
     <ClCompile Include="BrainfuckCE.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\compiler.h" />
-    <ClInclude Include="..\src\stack.h" />
-    <ClInclude Include="..\src\vm.h" />
+    <ClInclude Include="..\src\bf\compiler.h" />
+    <ClInclude Include="..\src\bf\stack.h" />
+    <ClInclude Include="..\src\bf\vm.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
