@@ -8,6 +8,8 @@
 #include <math.h>
 #include <string.h> //for memset
 
+#include <debug.h>
+
 #include "files.h"
 #include "vm.h"
 
@@ -36,6 +38,8 @@ char key;
 
 //if the interrupt checkbox is checked
 bool key_interrupt = true;
+//if the optimize checkbox is checked
+bool optimize = true;
 
 //hacky way to supply input to the xmas tree program
 int input_index = 0;
@@ -51,7 +55,7 @@ void rect_border(uint24_t x, uint8_t y, uint24_t width, uint8_t height) {
 //draw the right inner rectangle with the run options
 void gui_file_info() {
 	uint16_t info_width, bytecode_width, native_width;
-	uint16_t cursor_x = 0; uint8_t cursor_y = 0;
+	uint16_t arrow_x = 0; uint8_t arrow_y = 0;
 
 	info_width = gfx_GetStringWidth(text_info);
 	bytecode_width = gfx_GetStringWidth(text_bytecode);
@@ -69,13 +73,17 @@ void gui_file_info() {
 	gfx_SetColor(BORDER_COLOR);
 	gfx_HorizLine(170 + (LCD_WIDTH - 170) / 2 - info_width / 2 - 4, 26 + 10, info_width + 8);
 
+//key interrupt checkbox
 	gfx_PrintStringXY("Key Interrupt", 170 + 8 + 4 + 4, 50);
-	
 	rect_border(LCD_WIDTH - 4 - 4 - 8, 50, 8, 8);
-
 	gfx_SetColor(key_interrupt ? BORDER_COLOR : BACKGROUND_COLOR);
 	gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52, 5, 5);
-
+	gfx_SetColor(BORDER_COLOR);
+//optimize checkbox
+	gfx_PrintStringXY("Optimize", 170 + 8 + 4 + 4, 50 + 12);
+	rect_border(LCD_WIDTH - 4 - 4 - 8, 50 + 12, 8, 8);
+	gfx_SetColor(optimize ? BORDER_COLOR : BACKGROUND_COLOR);
+	gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52 + 12, 5, 5);
 	gfx_SetColor(BORDER_COLOR);
 
 	gfx_PrintStringXY(text_bytecode, 170 + (LCD_WIDTH - 170) / 2 - bytecode_width / 2, 170);
@@ -86,21 +94,25 @@ void gui_file_info() {
 
 	switch(button_index) {
 		case 0:
-			cursor_x = 170 + 6;
-			cursor_y = 50;
+			arrow_x = 170 + 6;
+			arrow_y = 50;
 			break;
 		case 1:
-			cursor_x = 170 + (LCD_WIDTH - 170) / 2 - bytecode_width / 2 - 4 - 8 -2;
-			cursor_y = 170;
+			arrow_x = 170 + 6;
+			arrow_y = 50 + 12;
 			break;
 		case 2:
-			cursor_x = 170 + (LCD_WIDTH - 170) / 2 - native_width / 2 - 4 - 8 - 2;
-			cursor_y = 170 + 8 + 6 + 4;
+			arrow_x = 170 + (LCD_WIDTH - 170) / 2 - bytecode_width / 2 - 4 - 8 -2;
+			arrow_y = 170;
+			break;
+		case 3:
+			arrow_x = 170 + (LCD_WIDTH - 170) / 2 - native_width / 2 - 4 - 8 - 2;
+			arrow_y = 170 + 8 + 6 + 4;
 			break;
 	}
 
 	gfx_SetTextFGColor(list_focused ? TEXT_COLOR : BORDER_COLOR);
-	gfx_PrintStringXY(">", cursor_x, cursor_y);
+	gfx_PrintStringXY(">", arrow_x, arrow_y);
 }
 
 //draw the left inner rectangle with the list of programs
@@ -115,6 +127,13 @@ void gui_list_files() {
 	gfx_SetColor(BACKGROUND_COLOR);
 	gfx_SetTextFGColor(TEXT_COLOR);
 
+	if(list.amount == 0) {
+		gfx_PrintStringXY("Create a TI-BASIC", 5, 30);
+		gfx_PrintStringXY("program and put", 5, 30 + 10);
+		gfx_PrintStringXY("brainfuck in it!", 5, 30 + 10 * 2);
+		return;
+	}
+
 	gfx_FillRectangle_NoClip(2, 22, 170 - 2, LCD_HEIGHT - 20 * 2 - 4);
 
 	for(i = 0; i < list.amount; i++) {
@@ -125,6 +144,8 @@ void gui_list_files() {
 		}
 		gfx_PrintStringXY(list.files[i], 20, 30 + 10 * i);
 	}
+
+	
 }
 
 //the starting indexes to render
@@ -297,9 +318,7 @@ CELL_TYPE bf_get_input() {
     return ret;
 }
 
-#include <debug.h>
 void bf_print_cell(CELL_TYPE cell) {
-	dbg_sprintf(dbgout, "%c", cell);
     gui_console_print_char(cell, true);
 }
 
@@ -321,7 +340,7 @@ void gui_run() {
 
 				gui_list_files();
 			} else {
-				if(button_index < 2) button_index++;
+				if(button_index < 3) button_index++;
 				else button_index = 0;
 
 				gui_file_info();
@@ -334,40 +353,54 @@ void gui_run() {
 				gui_list_files();
 			} else {
 				if(button_index > 0) button_index--;
-				else button_index = 2;
+				else button_index = 3;
 
 				gui_file_info();
 			}
 		} else if(key == sk_Enter) {
 			if(list_focused) {
-				list_focused = false;
-				gui_list_files();
-				gui_file_info();
+				if(list.amount > 0) {
+					list_focused = false;
+					gui_list_files();
+					gui_file_info();
+				}
 			} else if(button_index == 0) {
 				key_interrupt = !key_interrupt;
 				gui_file_info();
 			} else if(button_index == 1) {
+				optimize = !optimize;
+				gui_file_info();
+			}else if(button_index == 2) {
 				//run bytecode
+				int error;
 				gui_draw_console();
 
 				gui_console_print("Compiling bytecode... ");
 
 				vm_Create(&vm);
-				vm_Compile(&vm, prog_fractal, strlen(prog_fractal), true);
+				if((error = vm_Compile(&vm, prog_fractal, strlen(prog_fractal), optimize)) != E_SUCCESS) {
+					char buffer[50];
+			        sprintf(buffer, "\nBytecode compile error %i (%s)", error, error_strings[error]);
+			        gui_console_print(buffer);
+			        //our alg doesn't work here for some reason so I'm just going to call manually lol
+			        gui_draw_console_text();
+				} else {
+					gui_console_print("Done\n");
 
-				gui_console_print("Done\n\n");
+					while(!vm_IsDone(&vm)) {
 
-				while(!vm_IsDone(&vm)) {
+				        int error = vm_Step(&vm);
+				        if(error != E_SUCCESS) {
+				            char buffer[25];
+				            sprintf(buffer, "Runtime error %i", error);
+				            gui_console_print(buffer);
+				            break;
+				        }
 
-			        int error = vm_Step(&vm);
-			        if(error != E_SUCCESS) {
-			            char buffer[25];
-			            sprintf(buffer, "Runtime error %i\0", error);
-			            gui_console_print(buffer);
-			            break;
-			        }
+				    }
 
-			    }
+				}
+				
 
 			    vm_Cleanup(&vm);
 
@@ -377,43 +410,46 @@ void gui_run() {
 
 			    gui_draw();
 
-			} else if(button_index == 2) {
+			} else if(button_index == 3) {
 				Compiler_t c;
 				gui_draw_console();
 
 				gui_console_print("Compiling native... ");
 
-				comp_Create(&c, prog_xmas, strlen(prog_xmas));
+				comp_Create(&c, prog_fractal, strlen(prog_fractal));
 				vm_Create(&vm);
 
-				comp_CompileNative(&c, &vm.mem, true);
+				comp_CompileNative(&c, &vm.mem, optimize);
 
     			if (c.error != E_SUCCESS) {
-			        char buffer[30];
-			        sprintf(buffer, "Native compile error %i\0", c.error);
+			        char buffer[50];
+			        sprintf(buffer, "\nNative compile error %i (%s)", c.error, error_strings[c.error]);
 			        gui_console_print(buffer);
-			        break;
+			        //our alg doesn't work here for some reason so I'm just going to call manually lol
+			        gui_draw_console_text();
 			    } else {
-			        gui_console_print("Done.\n");
+			        gui_console_print("Done.\nRunning...\n");
+
+				    (* ((void(*)()) c.code.native)) ();
+
+				    strcpy(&console[1][10], " Done. Use arrows to navigate.");
+				    gui_draw_console_text();
+
 			    }
 
-			    gui_console_print("Running...\n");
 
-			    (* ((void(*)()) c.code.native)) ();
-
-			    strcpy(&console[1][10], " Done. Use arrows to navigate.");
-			    gui_draw_console_text();
-
-			    vm_Cleanup(&vm);
+				vm_Cleanup(&vm);
 
 			    gui_navigate_console();
 
 				gui_reset_console();
 
 			    gui_draw();
+
+			    
 			}
 		} else if(key == sk_Right) {
-			if(list_focused) {
+			if(list.amount > 0 && list_focused) {
 				list_focused = false;
 				gui_list_files();
 				gui_file_info();

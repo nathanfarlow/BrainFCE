@@ -9,6 +9,17 @@ extern "C" {
 
 #include "stack.h"
 
+const char *error_strings[8] = {
+    "Success",
+    "Out of memory",
+    "Generic compiler error :( (plz report)",
+    "Stack overflow (too many leading opening brackets)",
+    "Stack underflow (not a corresponding closing bracket)",
+    "Cell pointer out of bounds",
+    "Invalid opcode :( (plz report)",
+    "PC error :( (plz report)"
+};
+
 /*
     This function basically takes strings of the same type of insn and changes it into one instruction
 
@@ -105,6 +116,8 @@ loop:
 
     return insn;
 }
+
+#define MAX_BYTECODE 5000
 
 #define MAX_INSN 45644
 uint8_t native_insn_mem[MAX_INSN]; //because malloc() can't allocate this much apparently
@@ -341,6 +354,13 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 
         i += consumed;
     }
+
+#ifdef __TICE__
+    if(c->code_length > MAX_BYTECODE) {
+        c->error = E_OUT_OF_MEMORY;
+        return;
+    }
+#endif
 
     c->code.bytecode = malloc(c->code_length * sizeof(Instruction_t));
 

@@ -25,15 +25,17 @@ void list_Create(FileList_t *list) {
 
     search_pos = NULL;
     while((var_name = ti_DetectVar(&search_pos, NULL, TI_PRGM_TYPE)) != NULL) {
-        if(i > 1) {
+
+        if(strcmp(var_name, "!") != 0 && strcmp(var_name, "#") != 0) {
             char *tmp = (char*)malloc(strlen(var_name) + 1);
 
             strcpy(tmp, var_name);
 
-            temp_arr[i - 2] = tmp;
-        }
+            temp_arr[i] = tmp;
 
-        i++;
+            i++;
+        }
+        
         
     }
 

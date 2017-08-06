@@ -29,6 +29,7 @@ enum Opcodes {
     OP_SET_ZERO,
 };
 
+extern const char *error_strings[8];
 enum Errors {
     
     /*Generic*/
