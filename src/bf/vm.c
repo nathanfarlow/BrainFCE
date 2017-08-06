@@ -24,8 +24,12 @@ int vm_Compile(struct VM *vm, const char *code, size_t len, bool optimize) {
 }
 
 void vm_Cleanup(struct VM *vm) {
-    if(vm->instructions != NULL)
-        free((void*)vm->instructions);
+#ifndef __TICE__
+    if(vm->instructions != NULL) {
+        free(vm->instructions);
+        vm->instructions = NULL;
+    }
+#endif
 }
 
 //http://esolangs.org/wiki/Brainfuck

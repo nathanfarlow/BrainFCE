@@ -80,6 +80,7 @@ void main(void) {
 	vm_Create(&vm);
 
 	test_compile_native(&compiler, &vm.mem, true);
+
 	comp_CleanupNative(&compiler);
 
 	comp_Create(&compiler, program, program_length);
@@ -87,6 +88,8 @@ void main(void) {
 
 	vm.instructions = compiler.code.bytecode;
 	vm.num_insns = compiler.code_length;
+
+	std::cout << "Bytecode instructions: " << vm.num_insns << std::endl;
 
     test_run_interpreter(&vm);
 

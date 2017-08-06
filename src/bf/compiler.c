@@ -117,10 +117,9 @@ loop:
     return insn;
 }
 
-#define MAX_BYTECODE 5000
-
 #ifdef __TICE__
-#define MAX_INSN 44000
+#define MAX_BYTECODE 4000 /*3875*/
+#define MAX_INSN 36000 /*35035*/
 #else
 #define MAX_INSN 1024 * 1024
 #endif
@@ -130,7 +129,7 @@ uint8_t native_insn_mem[MAX_INSN]; //because malloc() can't allocate this much a
 void op(Compiler_t *c, uint8_t opcode) { 
     if (c->pc >= MAX_INSN) {
         c->error = E_OUT_OF_MEMORY;
-        return; 
+        return;
     }
 
     c->code.native[c->pc++] = opcode; 
@@ -367,7 +366,11 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
     }
 #endif
 
+#ifdef __TICE__
+    c->code.bytecode = (Instruction_t*)0x0D09466; //plotSScreen (21945 bytes)
+#else
     c->code.bytecode = malloc(c->code_length * sizeof(Instruction_t));
+#endif
 
     i = 0;
     while (i < c->program_length) {
@@ -583,8 +586,12 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
 }
 
 void comp_CleanupBytecode(Compiler_t *c) {
-    if(c->code.bytecode != NULL)
+#ifndef __TICE__
+    if(c->code.bytecode != NULL) {
         free(c->code.bytecode);
+        c->code.bytecode = NULL;
+    }
+#endif
 }
 void comp_CleanupNative(Compiler_t *c) {
     //We don't malloc() the native array so we won't free it (for now anyway)

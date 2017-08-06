@@ -349,7 +349,8 @@ void run_bytecode() {
 			gui_console_print("Done.\nRunning...\n");
 
 			while(!vm_IsDone(&vm)) {
-		        int error = vm_Step(&vm);
+				int error;
+		        error = vm_Step(&vm);
 		        if(error != E_SUCCESS) {
 		            char buffer[25];
 		            sprintf(buffer, "Runtime error %i", error);
@@ -361,6 +362,7 @@ void run_bytecode() {
 		    }
 
 		    strcpy(&console[1][10], " Done. Use arrows to navigate.");
+		    gui_draw_console_text();
 
 		}
 	}
