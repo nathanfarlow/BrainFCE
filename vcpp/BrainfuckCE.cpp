@@ -27,6 +27,8 @@ void test_compile_native(Compiler_t *c, struct Memory *mem, bool optimize) {
         std::cout << "Native compile error " << c->error << std::endl;
         pause();
     }
+
+	std::cout << "Native length: " << c->code_length << std::endl;
 }
 
 void test_run_interpreter(struct VM *vm) {
@@ -70,7 +72,7 @@ const char *test = "+++[->+<]";
 
 void main(void) {
 
-	const char *program = hello_world;
+	const char *program = fractal;
 	const size_t program_length = strlen(program);
 
 	Compiler_t compiler;
@@ -80,7 +82,6 @@ void main(void) {
 	vm_Create(&vm);
 
 	test_compile_native(&compiler, &vm.mem, true);
-
 	comp_CleanupNative(&compiler);
 
 	comp_Create(&compiler, program, program_length);
@@ -88,8 +89,6 @@ void main(void) {
 
 	vm.instructions = compiler.code.bytecode;
 	vm.num_insns = compiler.code_length;
-
-	std::cout << "Bytecode instructions: " << vm.num_insns << std::endl;
 
     test_run_interpreter(&vm);
 

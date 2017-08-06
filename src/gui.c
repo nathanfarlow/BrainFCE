@@ -307,7 +307,9 @@ CELL_TYPE bf_get_input() {
     return ret;
 }
 
+#include <debug.h>
 void bf_print_cell(CELL_TYPE cell) {
+	dbg_sprintf(dbgout, "%c", cell);
     gui_console_print_char(cell, true);
 }
 

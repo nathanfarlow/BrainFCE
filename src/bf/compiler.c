@@ -97,7 +97,7 @@ loop:
     case CHAR_OPEN_BRACKET:
         insn.opcode = OP_OPEN_BRACKET;
 
-        if (index_equ(index + 1, CHAR_MINUS) && index_equ(index + 2, CHAR_CLOSE_BRACKET)) {
+        if (optimize && index_equ(index + 1, CHAR_MINUS) && index_equ(index + 2, CHAR_CLOSE_BRACKET)) {
             insn.opcode = OP_SET_ZERO;
             *consumed = 3;
         }
@@ -118,8 +118,8 @@ loop:
 }
 
 #ifdef __TICE__
-#define MAX_BYTECODE 4000 /*3875*/
-#define MAX_INSN 36000 /*35035*/
+#define MAX_BYTECODE 5000 /*3875 for fractal program*/
+#define MAX_INSN 36000 /*35035 for fractal program*/
 #else
 #define MAX_INSN 1024 * 1024
 #endif
