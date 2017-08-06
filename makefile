@@ -7,13 +7,13 @@
 # ** Add all shared library names to L **
 # ----------------------------
 
-NAME        ?= DEMO
+NAME        ?= BRAINF
 DEBUGMODE   ?= DEBUG
 COMPRESSED  ?= NO
 ICON        ?= iconc.png
 DESCRIPTION ?= "C SDK Demo"
 
-L ?= fileioc
+L ?= fileioc graphx
 
 # ----------------------------
 # Specify source and output locations

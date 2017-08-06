@@ -18,6 +18,26 @@
 
 #include <stdbool.h>
 
+#ifdef __TICE__
+    #define CHAR_GREATER        0x6C
+    #define CHAR_LESS           0x6B
+    #define CHAR_PLUS           0x70
+    #define CHAR_MINUS          0x71
+    #define CHAR_PERIOD         0x3A
+    #define CHAR_COMMA          0x2B
+    #define CHAR_OPEN_BRACKET   0x06
+    #define CHAR_CLOSE_BRACKET  0x07
+#else
+    #define CHAR_GREATER        '>'
+    #define CHAR_LESS           '<'
+    #define CHAR_PLUS           '+'
+    #define CHAR_MINUS          '-'
+    #define CHAR_PERIOD         '.'
+    #define CHAR_COMMA          ','
+    #define CHAR_OPEN_BRACKET   '['
+    #define CHAR_CLOSE_BRACKET  ']'
+#endif
+
 /*Opcodes for bytecode that represent BF instructions*/
 enum Opcodes {
     OP_ADD_CELL_POINTER,
@@ -29,6 +49,7 @@ enum Opcodes {
     OP_SET_ZERO,
 };
 
+extern const char *error_strings[8];
 enum Errors {
     
     /*Generic*/
