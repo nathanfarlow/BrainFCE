@@ -36,14 +36,14 @@ void scan_for_operand(const char *code, size_t len, unsigned int index, char add
 
         //this switch will allow us to ignore non-bf characters
         switch (c) {
-        case '>':
-        case '<':
-        case '+':
-        case '-':
-        case '.':
-        case ',':
-        case '[':
-        case ']':
+        case CHAR_GREATER:
+        case CHAR_LESS:
+        case CHAR_PLUS:
+        case CHAR_MINUS:
+        case CHAR_PERIOD:
+        case CHAR_COMMA:
+        case CHAR_OPEN_BRACKET:
+        case CHAR_CLOSE_BRACKET:
             if (c == add)
                 (*operand)++;
             else if (c == sub)
@@ -68,42 +68,42 @@ Instruction_t next_insn(const char *code, size_t len, unsigned int index, bool o
 
 loop:
     switch (code[index]) {
-    case '>':
-    case '<':
+    case CHAR_GREATER:
+    case CHAR_LESS:
         insn.opcode = OP_ADD_CELL_POINTER;
 
         if (optimize)
-            scan_for_operand(code, len, index, '>', '<', &insn.operand, consumed);
+            scan_for_operand(code, len, index, CHAR_GREATER, CHAR_LESS, &insn.operand, consumed);
         else
-            insn.operand = code[index] == '>' ? 1 : -1;
+            insn.operand = code[index] == CHAR_GREATER ? 1 : -1;
 
         break;
-    case '+':
-    case '-':
+    case CHAR_PLUS:
+    case CHAR_MINUS:
         insn.opcode = OP_ADD_CELL_VALUE;
 
         if(optimize)
-            scan_for_operand(code, len, index, '+', '-', &insn.operand, consumed);
+            scan_for_operand(code, len, index, CHAR_PLUS, CHAR_MINUS, &insn.operand, consumed);
         else
-            insn.operand = code[index] == '+' ? 1 : -1;
+            insn.operand = code[index] == CHAR_PLUS ? 1 : -1;
 
         break;
-    case '.':
+    case CHAR_PERIOD:
         insn.opcode = OP_PRINT_CELL;
         break;
-    case ',':
+    case CHAR_COMMA:
         insn.opcode = OP_INPUT_CELL;
         break;
-    case '[':
+    case CHAR_OPEN_BRACKET:
         insn.opcode = OP_OPEN_BRACKET;
 
-        if (index_equ(index + 1, '-') && index_equ(index + 2, ']')) {
+        if (index_equ(index + 1, CHAR_MINUS) && index_equ(index + 2, CHAR_CLOSE_BRACKET)) {
             insn.opcode = OP_SET_ZERO;
             *consumed = 3;
         }
 
         break;
-    case ']':
+    case CHAR_CLOSE_BRACKET:
         insn.opcode = OP_CLOSE_BRACKET;
         break;
     default:
@@ -119,7 +119,12 @@ loop:
 
 #define MAX_BYTECODE 5000
 
-#define MAX_INSN 45644
+#ifdef __TICE__
+#define MAX_INSN 44000
+#else
+#define MAX_INSN 1024 * 1024
+#endif
+
 uint8_t native_insn_mem[MAX_INSN]; //because malloc() can't allocate this much apparently
 
 void op(Compiler_t *c, uint8_t opcode) { 
