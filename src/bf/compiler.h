@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <stdbool.h>
+
 #include "stack.h"
 
 #ifdef __TICE__
@@ -15,8 +17,6 @@
 #define CELL_32
 #define CELL_TYPE uint32_t
 #endif
-
-#include <stdbool.h>
 
 #ifdef __TICE__
     #define CHAR_GREATER        0x6C

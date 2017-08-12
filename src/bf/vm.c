@@ -32,7 +32,6 @@ void vm_Cleanup(struct VM *vm) {
 #endif
 }
 
-//http://esolangs.org/wiki/Brainfuck
 int vm_Step(struct VM *vm) {
     Instruction_t insn = vm->instructions[vm->pc];
 

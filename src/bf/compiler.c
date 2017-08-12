@@ -7,8 +7,6 @@ extern "C" {
 
 #include "compiler.h"
 
-#include "stack.h"
-
 const char *error_strings[8] = {
     "Success",
     "Out of memory",
@@ -419,12 +417,6 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 
 }
 
-/*
-    .SIS 0x40
-    .LIS 0x49
-    .SIL 0x52
-    .LIL 0x5B
-*/
 void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
     unsigned int i;
 

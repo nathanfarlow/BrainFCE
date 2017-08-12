@@ -5,8 +5,6 @@
 
 #ifndef _WIN32
 #define __TICE__
-#else
-//typedef unsigned int size_t
 #endif
 
 #ifdef __TICE__

@@ -1,3 +1,9 @@
+/*
+	Please don't judge my programming from this gui and file loading code...
+	I'm new to the calculator and it's rendering/file functions. Maybe check
+	out compiler.c instead? :P
+*/
+
 #include "gui.h"
 
 #include <tice.h>
@@ -5,10 +11,10 @@
 
 #include <string.h> //for memset
 
+#include <debug.h>
+
 #include "files.h"
 #include "bf/vm.h"
-
-void pause();
 
 #define TRANSPARENT_COLOR 10
 
@@ -139,7 +145,6 @@ void gui_list_files() {
 		}
 		gfx_PrintStringXY(list.files[i], 20, 30 + 10 * i);
 	}
-
 	
 }
 
@@ -297,22 +302,6 @@ void gui_draw() {
 	gui_file_info();
 }
 
-
-CELL_TYPE bf_get_input() {
-    int ret = 'A';
-    if(input_index == 0) ret = '2';
-    else if(input_index == 1) ret = '0';
-    else if(input_index >= 2) ret = 0;
-    input_index++;
-    return ret;
-}
-
-#include <debug.h>
-void bf_print_cell(CELL_TYPE cell) {
-	dbg_sprintf(dbgout, "%c", cell);
-    gui_console_print_char(cell, true);
-}
-
 //again, becaues malloc() is sketchy af here
 #define MAX_PROGRAM_SIZE 12000
 char code[MAX_PROGRAM_SIZE];
@@ -411,7 +400,7 @@ void run_native() {
 		    gui_draw_console_text();
 		} else {
 		    gui_console_print("Done.\nRunning...\n");
-		    
+
 		    (* ((void(*)()) c.code.native)) ();
 
 		    strcpy(&console[1][10], " Done. Use arrows to navigate.");
@@ -512,4 +501,19 @@ void gui_run() {
 
 void gui_cleanup() {
 	list_Cleanup(&list);
+}
+
+//TODO: Support input
+CELL_TYPE bf_get_input() {
+    int ret = 'A';
+    if(input_index == 0) ret = '2';
+    else if(input_index == 1) ret = '0';
+    else if(input_index >= 2) ret = 0;
+    input_index++;
+    return ret;
+}
+
+void bf_print_cell(CELL_TYPE cell) {
+	dbg_sprintf(dbgout, "%c", cell);
+    gui_console_print_char(cell, true);
 }

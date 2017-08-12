@@ -1,15 +1,7 @@
 #ifndef VM_H_
 #define VM_H_
 
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <stdbool.h>
-#include <stddef.h>
-
 #include "compiler.h"
-
 
 struct VM {
 
