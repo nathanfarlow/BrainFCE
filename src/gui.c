@@ -380,6 +380,8 @@ void run_native() {
 	ti_var_t program;
 	size_t size;
 
+	uint8_t i;
+
 	ti_CloseAll();
 	program = ti_OpenVar(list.files[file_index], "r", TI_PRGM_TYPE);
 	size = ti_GetSize(program);
@@ -409,7 +411,7 @@ void run_native() {
 		    gui_draw_console_text();
 		} else {
 		    gui_console_print("Done.\nRunning...\n");
-
+		    
 		    (* ((void(*)()) c.code.native)) ();
 
 		    strcpy(&console[1][10], " Done. Use arrows to navigate.");
@@ -417,7 +419,14 @@ void run_native() {
 
 		}
 	}
-
+	dbg_sprintf(dbgout, "{");
+	for(i = 0; i < 6; i++) {
+		dbg_sprintf(dbgout, "0x%02X", vm.mem.cells[i]);
+		if(i != 5)
+			dbg_sprintf(dbgout, ", ");
+	}
+	dbg_sprintf(dbgout, "}\n");
+	
 	vm_Cleanup(&vm);
 	gui_navigate_console();
 	gui_reset_console();

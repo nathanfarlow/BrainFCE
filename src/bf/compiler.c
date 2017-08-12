@@ -438,7 +438,6 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
         //P3: Internal Error(0x83BAF1): \ Please contact Technical Support \ make: *** [obj/compiler.obj] Error -1
         Instruction_t insn;
         insn = next_insn(c->program, c->program_length, i, optimize, &consumed);
-
         switch (insn.opcode) {
         case OP_ADD_CELL_POINTER:
 
@@ -484,6 +483,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
 
             c->hl = JUNK;
             c->de = CELL_VALUE;
+            c->bc = JUNK;
 
             break;
         case OP_INPUT_CELL:
@@ -502,6 +502,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
             
             c->hl = CELL_PTR;
             c->de = CELL_VALUE;
+            c->bc = JUNK;
 
             break;
         case OP_OPEN_BRACKET:
