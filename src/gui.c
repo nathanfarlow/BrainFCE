@@ -8,10 +8,10 @@
 
 #include <tice.h>
 #include <graphx.h>
+#include <keypadc.h>
+#include <debug.h>
 
 #include <string.h> //for memset
-
-#include <debug.h>
 
 #include "files.h"
 #include "bf/vm.h"
@@ -74,18 +74,19 @@ void gui_file_info() {
 	gfx_SetColor(BORDER_COLOR);
 	gfx_HorizLine(170 + (LCD_WIDTH - 170) / 2 - info_width / 2 - 4, 26 + 10, info_width + 8);
 
-//key interrupt checkbox
-	gfx_PrintStringXY("Key Interrupt", 170 + 8 + 4 + 4, 50);
+//optimize checkbox
+	gfx_PrintStringXY("Optimize", 170 + 8 + 4 + 4, 50);
 	rect_border(LCD_WIDTH - 4 - 4 - 8, 50, 8, 8);
-	gfx_SetColor(key_interrupt ? BORDER_COLOR : BACKGROUND_COLOR);
+	gfx_SetColor(optimize ? BORDER_COLOR : BACKGROUND_COLOR);
 	gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52, 5, 5);
 	gfx_SetColor(BORDER_COLOR);
-//optimize checkbox
-	gfx_PrintStringXY("Optimize", 170 + 8 + 4 + 4, 50 + 12);
+//key interrupt checkbox
+	gfx_PrintStringXY("Key Interrupt", 170 + 8 + 4 + 4, 50 + 12);
 	rect_border(LCD_WIDTH - 4 - 4 - 8, 50 + 12, 8, 8);
-	gfx_SetColor(optimize ? BORDER_COLOR : BACKGROUND_COLOR);
+	gfx_SetColor(key_interrupt ? BORDER_COLOR : BACKGROUND_COLOR);
 	gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52 + 12, 5, 5);
 	gfx_SetColor(BORDER_COLOR);
+	gfx_PrintStringXY("(Bytecode only)", 170 + 8 + 4 + 4, 50 + 12 + 12);
 
 	gfx_PrintStringXY(text_bytecode, 170 + (LCD_WIDTH - 170) / 2 - bytecode_width / 2, 170);
 	rect_border(170 + (LCD_WIDTH - 170) / 2 - bytecode_width / 2 - 4, 170 - 4, bytecode_width + 6, 8 + 6);
@@ -349,7 +350,11 @@ void run_bytecode() {
 		            break;
 		        }
 
-		        //if(key_interrupt && os_GetCSC() != 0) break;
+		        if(key_interrupt) {
+		        	kb_Scan();
+		        	if(kb_Data[6] == kb_Clear)
+		        		break;
+		        }
 		    }
 
 		    strcpy(&console[1][10], " Done. Use arrows to navigate.");
@@ -408,8 +413,10 @@ void run_native() {
 
 		}
 	}
+
+	//print the first 10 cells for debugging purposes
 	dbg_sprintf(dbgout, "{");
-	for(i = 0; i < 6; i++) {
+	for(i = 0; i < 10; i++) {
 		dbg_sprintf(dbgout, "0x%02X", vm.mem.cells[i]);
 		if(i != 5)
 			dbg_sprintf(dbgout, ", ");
@@ -465,10 +472,10 @@ void gui_run() {
 					gui_file_info();
 				}
 			} else if(button_index == 0) {
-				key_interrupt = !key_interrupt;
+				optimize = !optimize;
 				gui_file_info();
 			} else if(button_index == 1) {
-				optimize = !optimize;
+				key_interrupt = !key_interrupt;
 				gui_file_info();
 			}else if(button_index == 2) {
 				
