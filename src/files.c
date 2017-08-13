@@ -34,7 +34,6 @@ void list_Create(FileList_t *list) {
             i++;
         }
         
-        
     }
 
     //sort temp_arr alphabetically and put in list->files

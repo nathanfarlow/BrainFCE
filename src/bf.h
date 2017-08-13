@@ -8,9 +8,13 @@
 
 #ifdef _DEBUG
 //define if you want to debug the native code in cemu
-#define _DEBUG_NATIVE
+//#define _DEBUG_NATIVE
 
+#ifdef _DEBUG_NATIVE
+//The amount of cells to print to cemu console
 #define _DEBUG_CELL_AMOUNT 10
+#endif
+
 #endif
 
 #endif
