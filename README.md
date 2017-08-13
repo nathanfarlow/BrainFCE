@@ -58,6 +58,8 @@ character or clear to clear the whole textbox.
 
 Press the mode button to quit the application. Press the clear button to clear the console when the brainfuck program has finished.
 
+BrainfuckCE can run both archived and unarhived programs without an issue.
+
 ## Technical docs
 The max stack depth for leading opening brackets is 100.
 
