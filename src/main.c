@@ -2,7 +2,7 @@
  *--------------------------------------
  * Program Name: BrainfuckCE
  * Author: Nathan Farlow
- * License: WTFPL
+ * License: MIT
  * Description: Interprets and/or compiles brainfuck code
  *--------------------------------------
 */
