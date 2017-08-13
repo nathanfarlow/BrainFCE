@@ -15,7 +15,7 @@ Huge thanks to MateoConLechuga for the toolchain and all the work on the CE calc
 ![xmas](https://github.com/nathanfarlow/BrainfuckCE/blob/master/img/xmas_bytecode.gif)
 
 
-## How to build
+## How to build from source
 * Download and install https://github.com/CE-Programming/toolchain/releases
 * Navigate to BrainfuckCE directory in a command prompt/terminal
 * Type 'make' without quotes.
