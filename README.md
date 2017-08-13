@@ -24,7 +24,7 @@ Huge thanks to MateoConLechuga for the toolchain and all the work on the CE calc
 ## How to run
 * Download the latest release at https://github.com/nathanfarlow/BrainfuckCE/releases
 * Send BRAINF.8xp to your calculator.
-* Download libraries from https://github.com/CE-Programming/toolchain/releases and send them to your calculator.
+* Download libraries from https://github.com/CE-Programming/libraries/releases and send them to your calculator.
 * Run BrainfuckCE with Asm(prgmBRAINF
 * Use arrow keys and select your program and either run with bytecode or native.
 
