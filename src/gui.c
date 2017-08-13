@@ -85,10 +85,10 @@ void gui_file_info() {
 
     gfx_SetTextFGColor(TEXT_COLOR);
 
-    gfx_PrintStringXY(text_info, 170 + (LCD_WIDTH - 170) / 2 - info_width / 2, 26);
+    gfx_PrintStringXY(text_info, 170 + (LCD_WIDTH - 170) / 2 - info_width / 2, 28);
 
     gfx_SetColor(BORDER_COLOR);
-    gfx_HorizLine(170 + (LCD_WIDTH - 170) / 2 - info_width / 2 - 4, 26 + 10, info_width + 8);
+    gfx_HorizLine(170 + (LCD_WIDTH - 170) / 2 - info_width / 2 - 4, 28 + 10, info_width + 8);
 
 //optimize checkbox
     gfx_PrintStringXY("Optimize", 170 + 8 + 4 + 4, 50);
