@@ -144,6 +144,15 @@ void gui_file_info() {
     gfx_PrintStringXY(">", arrow_x, arrow_y);
 }
 
+//The max amount of programs on the screen at one time
+#define MAX_FILE_LIST 19
+
+#define min(a, b) (a < b ? a : b)
+#define max(a, b) (a > b ? a : b)
+
+//controls the scrolling on the program list
+uint16_t file_cursor_index = 0, file_offset = 0;
+
 //draw the left inner rectangle with the list of programs
 void gui_list_files() {
     uint16_t i;
@@ -165,13 +174,13 @@ void gui_list_files() {
 
     gfx_FillRectangle_NoClip(2, 22, 170 - 2, LCD_HEIGHT - 20 * 2 - 4);
 
-    for(i = 0; i < list.amount; i++) {
-        if(i == file_index) {
+    for(i = 0; i < min(list.amount, MAX_FILE_LIST); i++) {
+        if(i == file_cursor_index) {
             gfx_SetTextFGColor(list_focused ? BORDER_COLOR : TEXT_COLOR);
-            gfx_PrintStringXY(">", 20 - 6 - 2, 30 + 10 * i);
+            gfx_PrintStringXY(">", 20 - 6 - 2, 27 + 10 * i);
             gfx_SetTextFGColor(TEXT_COLOR);
         }
-        gfx_PrintStringXY(list.files[i], 20, 30 + 10 * i);
+        gfx_PrintStringXY(list.files[i + file_offset], 20, 27 + 10 * i);
     }
     
 }
@@ -484,8 +493,18 @@ void gui_run() {
 
         if(key == sk_Down) {
             if(list_focused) {
+
+                if(++file_cursor_index > MAX_FILE_LIST - 1) {
+                    file_offset++;
+                    file_cursor_index = MAX_FILE_LIST - 1;
+                }
+
                 if(file_index < list.amount - 1) file_index++;
-                else file_index = 0;
+                else {
+                    file_index = 0;
+                    file_cursor_index = 0;
+                    file_offset = 0;
+                }
 
                 gui_list_files();
             } else {
@@ -496,8 +515,17 @@ void gui_run() {
             }
         } else if(key == sk_Up) {
             if(list_focused) {
+
+                if(file_cursor_index == 0) {
+                    if(file_offset > 0) file_offset--;
+                } else file_cursor_index--;
+
                 if(file_index > 0) file_index--;
-                else file_index = list.amount - 1;
+                else {
+                    file_index = list.amount - 1;
+                    file_cursor_index = min(list.amount - 1, MAX_FILE_LIST - 1);
+                    file_offset = file_index - file_cursor_index;
+                }
             
                 gui_list_files();
             } else {
