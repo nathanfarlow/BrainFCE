@@ -3,19 +3,21 @@ A Brainfuck interpreter and native compiler written in C for the TI 84 PCE calcu
 
 Huge thanks to MateoConLechuga for the toolchain and all the work on the CE calculator. Thanks also to Iambian over on the cemetech irc.
 
-### A screenshot of the gui
+#### A screenshot of the gui
 ![gui](https://github.com/nathanfarlow/BrainfuckCE/blob/master/img/screenshot.png)
 
-### Running and viewing fractal program natively
+#### Running and viewing fractal program natively
+(The flashing is not as bad when run on an actual calculator)
+
 ![native code](https://github.com/nathanfarlow/BrainfuckCE/blob/master/img/fractal_native.gif)
 
-### Running the xmas tree program with bytecode
-(The missing asterisks only occur when recording screen with cemu)
+#### Running the xmas tree program with bytecode
+(The flashing is not as bad when run on an actual calculator)
 
-![xmas](https://github.com/nathanfarlow/BrainfuckCE/blob/master/img/xmas_bytecode.gif)
+![bytecode](https://github.com/nathanfarlow/BrainfuckCE/blob/master/img/xmas_bytecode.gif)
 
 
-## How to build
+## How to build from source
 * Download and install https://github.com/CE-Programming/toolchain/releases
 * Navigate to BrainfuckCE directory in a command prompt/terminal
 * Type 'make' without quotes.
