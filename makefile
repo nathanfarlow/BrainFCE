@@ -8,7 +8,7 @@
 # ----------------------------
 
 NAME        ?= BRAINF
-DEBUGMODE   ?= DEBUG
+DEBUGMODE   ?= NDEBUG
 COMPRESSED  ?= NO
 ICON        ?= iconc.png
 DESCRIPTION ?= "C SDK Demo"
