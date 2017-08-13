@@ -22,6 +22,7 @@ Huge thanks to MateoConLechuga for the toolchain and all the work on the CE calc
 * BRAINF.8xp will be in the bin directory.
 
 ## How to run
+* Download the latest release at https://github.com/nathanfarlow/BrainfuckCE/releases
 * Send BRAINF.8xp to your calculator.
 * Download libraries from https://github.com/CE-Programming/toolchain/releases and send them to your calculator.
 * Run BrainfuckCE with Asm(prgmBRAINF
