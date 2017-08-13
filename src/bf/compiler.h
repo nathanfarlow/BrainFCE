@@ -49,7 +49,7 @@ enum Opcodes {
     OP_SET_ZERO,
 };
 
-extern const char *error_strings[8];
+extern const char *error_strings[9];
 enum Errors {
     
     /*Generic*/
@@ -60,6 +60,7 @@ enum Errors {
     E_GENERIC_COMPILE,  //Something went wrong with our compilation algorithms
     E_STACK_OVERFLOW,   //Too many leading [ without ]
     E_STACK_UNDERFLOW,  //Unbalanced ]
+    E_UNMATCHED_OPEN,   //Not a matching ]
 
     /*Runtime*/
     E_CELL_POINTER_OUT_OF_BOUNDS,   //cell_ptr exceeds cells[]

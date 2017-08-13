@@ -7,12 +7,13 @@ extern "C" {
 
 #include "compiler.h"
 
-const char *error_strings[8] = {
+const char *error_strings[9] = {
     "Success",
     "Out of memory",
     "Generic compiler error :( (plz report)",
     "Stack overflow (too many leading opening brackets)",
-    "Stack underflow (not a corresponding closing bracket)",
+    "Unmatched closing bracket",
+    "Unmatched opening bracket",
     "Cell pointer out of bounds",
     "Invalid opcode :( (plz report)",
     "PC error :( (plz report)"
@@ -415,6 +416,8 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
         i += consumed;
     }
 
+    if(c->stack.top != 0)
+        c->error = E_UNMATCHED_OPEN;
 }
 
 void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
@@ -576,6 +579,9 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
 
     op(c, 0xC9); //ret
     c->code_length = c->pc;
+
+    if(c->stack.top != 0)
+        c->error = E_UNMATCHED_OPEN;
 }
 
 void comp_CleanupBytecode(Compiler_t *c) {
