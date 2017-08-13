@@ -603,6 +603,7 @@ void gui_run() {
 
 void gui_cleanup() {
     list_Cleanup(&list);
+    _OS(asm_ClrTxtShd); //because we use the plotSScreen memory
 }
 
 CELL_TYPE bf_get_input() {

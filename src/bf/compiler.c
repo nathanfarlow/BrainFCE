@@ -366,7 +366,7 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 #endif
 
 #ifdef __TICE__
-    c->code.bytecode = (Instruction_t*)0x0D09466; //plotSScreen (21945 bytes)
+    c->code.bytecode = (Instruction_t*)0x0D09466; //plotSScreen (21945 bytes) need to call _OS(asm_ClrTxtShd); sometime
 #else
     c->code.bytecode = malloc(c->code_length * sizeof(Instruction_t));
 #endif
