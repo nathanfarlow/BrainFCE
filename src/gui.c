@@ -331,7 +331,7 @@ void gui_draw() {
     rect_border(170, 23, LCD_WIDTH - 170 - 4, LCD_HEIGHT - 20 * 2 - 7);
 
     gfx_PrintStringXY("BrainfuckCE (Cesium theme)", 6, 7);
-    gfx_PrintStringXY("BrainfuckCE Version 1.1 by squishy", 6, LCD_HEIGHT - 14);
+    gfx_PrintStringXY("BrainfuckCE Version 1.2 by squishy", 6, LCD_HEIGHT - 14);
 
     gui_list_files();
     gui_file_info();
