@@ -11,51 +11,6 @@ extern "C" {
 void print_array(CELL_TYPE *arr, size_t size);
 void pause();
 
-void test_compile_bytecode(Compiler_t *c, bool optimize) {
-	comp_CompileBytecode(c, optimize);
-
-    if (c->error!= E_SUCCESS) {
-        std::cout << "Bytecode compile error " << c->error << std::endl;
-        pause();
-    }
-}
-
-void test_compile_native(Compiler_t *c, struct Memory *mem, bool optimize) {
-	comp_CompileNative(c, mem, optimize);
-
-    if (c->error != E_SUCCESS) {
-        std::cout << "Native compile error " << c->error << std::endl;
-        pause();
-    }
-
-	std::cout << "Native length: " << c->code_length << std::endl;
-}
-
-void test_run_interpreter(struct VM *vm) {
-
-    std::cout << "Bytecode length: " << vm->num_insns << std::endl;
-
-    std::cout << "Using " << sizeof(vm->mem.cells) / sizeof(CELL_TYPE) << " " << sizeof(CELL_TYPE) << " byte cells" << std::endl << std::endl;
-
-    std::clock_t start = std::clock();
-    while (!vm_IsDone(vm)) {
-        int error = vm_Step(vm);
-        if (error != E_SUCCESS) {
-            std::cout << "Runtime error " << error << std::endl;
-            break;
-        }
-    }
-
-    std::clock_t end = std::clock();
-
-    std::cout << std::endl;
-    print_array(vm->mem.cells, 10);
-
-    double elapsed_seconds = double(end - start) / CLOCKS_PER_SEC;
-    std::cout << "Execution time: " << elapsed_seconds << " seconds" << std::endl;
-}
-
-
 const char *hello_world = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.";
 const char *fibbo = ">++++++++++>+>+[[+++++[>++++++++<-]>.<++++++[>--------<-]+<<<]>.>>[[-]<[>+<-]>>[<<+>+>-]<[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>+<-[>[-]>+>+<<<-[>+<-]]]]]]]]]]]+>>>]<<<]";
 const char *xmas = ">>>--------<,[<[>++++++++++<-]>>[<------>>-<+],]++>>++<--[<++[+>]>+<<+++<]<<[>>+[[>>+<<-]<<]>>>>[[<<+>.>-]>>]<.<<<+<<-]>>[<.>--]>.>>.";
@@ -69,6 +24,50 @@ const char *prog_triple_mult = "++++[-]++++++[->+++++[->++<]<]>>";
 const char *prog_move = "+++++ >>[-]<<[->>+<<]";
 
 const char *test = "+++[->+<]";
+
+void test_compile_bytecode(Compiler_t *c, bool optimize) {
+	comp_CompileBytecode(c, optimize);
+
+	if (c->error != E_SUCCESS) {
+		std::cout << "Bytecode compile error " << c->error << std::endl;
+		pause();
+	}
+}
+
+void test_compile_native(Compiler_t *c, struct Memory *mem, bool optimize) {
+	comp_CompileNative(c, mem, optimize);
+
+	if (c->error != E_SUCCESS) {
+		std::cout << "Native compile error " << c->error << std::endl;
+		pause();
+	}
+
+	std::cout << "Native length: " << c->code_length << std::endl;
+}
+
+void test_run_interpreter(struct VM *vm) {
+
+	std::cout << "Bytecode length: " << vm->num_insns << std::endl;
+
+	std::cout << "Using " << sizeof(vm->mem.cells) / sizeof(CELL_TYPE) << " " << sizeof(CELL_TYPE) << " byte cells" << std::endl << std::endl;
+
+	std::clock_t start = std::clock();
+	while (!vm_IsDone(vm)) {
+		int error = vm_Step(vm);
+		if (error != E_SUCCESS) {
+			std::cout << "Runtime error " << error << std::endl;
+			break;
+		}
+	}
+
+	std::clock_t end = std::clock();
+
+	std::cout << std::endl;
+	print_array(vm->mem.cells, 10);
+
+	double elapsed_seconds = double(end - start) / CLOCKS_PER_SEC;
+	std::cout << "Execution time: " << elapsed_seconds << " seconds" << std::endl;
+}
 
 void main(void) {
 
@@ -90,36 +89,36 @@ void main(void) {
 	vm.instructions = compiler.code.bytecode;
 	vm.num_insns = compiler.code_length;
 
-    test_run_interpreter(&vm);
+	test_run_interpreter(&vm);
 
 	comp_CleanupBytecode(&compiler);
 
-    pause();
+	pause();
 }
 
 void print_array(CELL_TYPE *arr, size_t size) {
-    size_t i = 0;
+	size_t i = 0;
 
-    std::cout << "[";
+	std::cout << "[";
 
-    for (; i < size; i++) {
-        std::cout << std::hex << arr[i];
+	for (; i < size; i++) {
+		std::cout << std::hex << arr[i];
 
-        if (i != size - 1)
-            std::cout << ", ";
-    }
+		if (i != size - 1)
+			std::cout << ", ";
+	}
 
-    std::cout << "]" << std::endl;
+	std::cout << "]" << std::endl;
 }
 
 void bf_print_cell(CELL_TYPE cell) {
-    std::cout << (char)cell;
+	std::cout << (char)cell;
 }
 
 CELL_TYPE bf_get_input() {
-    return 0;
+	return 0;
 }
 
 void pause() {
-    getchar();
+	getchar();
 }
