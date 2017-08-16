@@ -117,12 +117,14 @@ loop:
 }
 
 #ifdef __TICE__
-#define MAX_BYTECODE 5000 /*3875 for fractal program*/
-#define MAX_INSN 36000 /*35035 for fractal program*/
+/*35588 native insns for fractal program*/
+#define MAX_INSN 36000
 #else
-#define MAX_BYTECODE (1024 * 1024)
-#define MAX_INSN (1024 * 1024 * 1024)
+#define MAX_INSN (1024 * 1024)
 #endif
+
+/*3875 bytecode insns needed for fractal program*/
+#define MAX_BYTECODE (MAX_INSN / sizeof(Instruction_t))
 
 void op(Compiler_t *c, uint8_t opcode) { 
     if (c->pc >= MAX_INSN) {
@@ -356,7 +358,7 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 
         i += consumed;
     }
-    
+
     if(c->code_length > MAX_BYTECODE) {
         c->error = E_OUT_OF_MEMORY;
         return;
