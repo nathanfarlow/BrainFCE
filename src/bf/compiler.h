@@ -96,7 +96,7 @@ typedef struct Compiler {
 
     unsigned int pc;
 
-	enum RegState hl, de, bc;
+    enum RegState hl, de, bc;
     unsigned int bc_val;
 
     Stack_t stack;
@@ -105,7 +105,7 @@ typedef struct Compiler {
     union {
         Instruction_t *bytecode;
         uint8_t *native;
-	} code;
+    } code;
 } Compiler_t;
 
 void comp_Create(Compiler_t *c, const char *program, size_t program_length);

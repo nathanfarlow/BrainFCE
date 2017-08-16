@@ -226,7 +226,6 @@ void gui_draw_console() {
     gui_draw_console_text();
 }
 
-
 void gui_console_print_char(char c, bool draw) {
     if(c == '\n') {
         console_y++;
@@ -244,7 +243,6 @@ void gui_console_print_char(char c, bool draw) {
         gui_draw_console_text();
     }
 }
-
 
 //Add text to the console
 void gui_console_print(const char *str) {

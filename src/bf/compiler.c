@@ -8,14 +8,14 @@ extern "C" {
 #include "compiler.h"
 
 #ifdef __TICE__
-/*35588 native insns for fractal program*/
-#define MAX_INSN 36000
+/*35588 native instructions for fractal program*/
+#define MAX_NATIVE 36000
 #else
-#define MAX_INSN (1024 * 1024)
+#define MAX_NATIVE (1024 * 1024)
 #endif
 
-/*3875 bytecode insns needed for fractal program*/
-#define MAX_BYTECODE (MAX_INSN / sizeof(Instruction_t))
+/*3875 bytecode instructions needed for fractal program*/
+#define MAX_BYTECODE (MAX_NATIVE / sizeof(Instruction_t))
 
 const char *error_strings[9] = {
     "Success",
@@ -159,12 +159,11 @@ Instruction_t next_insn(const char *code, size_t len, unsigned int index, bool o
     return insn;
 }
 
-void op(Compiler_t *c, uint8_t opcode) { 
-    if (c->pc >= MAX_INSN) {
+void op(Compiler_t *c, uint8_t opcode) {
+    if (c->pc >= MAX_NATIVE) {
         c->error = E_OUT_OF_MEMORY;
         return;
     }
-
     c->code.native[c->pc++] = opcode; 
 }
 
@@ -451,7 +450,7 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
     unsigned int i;
 
-    c->code.native = malloc(MAX_INSN);
+    c->code.native = malloc(MAX_NATIVE);
 
     i = 0;
     while(i < c->program_length) {
