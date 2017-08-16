@@ -97,12 +97,12 @@ void gui_file_info() {
     gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52, 5, 5);
     gfx_SetColor(BORDER_COLOR);
 //key interrupt checkbox
-    gfx_PrintStringXY("Key Interrupt", 170 + 8 + 4 + 4, 50 + 12);
+    gfx_PrintStringXY("Hold clear to", 170 + 8 + 4 + 4, 50 + 12);
     rect_border(LCD_WIDTH - 4 - 4 - 8, 50 + 12, 8, 8);
     gfx_SetColor(key_interrupt ? BORDER_COLOR : BACKGROUND_COLOR);
     gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52 + 12, 5, 5);
     gfx_SetColor(BORDER_COLOR);
-    gfx_PrintStringXY("(Bytecode only)", 170 + 8 + 4 + 4, 50 + 12 * 2);
+    gfx_PrintStringXY("stop bytecode", 170 + 8 + 4 + 4, 50 + 12 * 2);
 //input textbox
     input_str = alpha_mode ? "Program Input [A]" : "Program Input";
     gfx_PrintStringXY(input_str, 170 + (LCD_WIDTH - 170) / 2 - gfx_GetStringWidth(input_str) / 2, 50 + 12 * 4);
@@ -402,7 +402,9 @@ void run_bytecode() {
                     break;
                 }
 
-                if(key_interrupt) {
+                if(key_interrupt && 
+                        (vm.instructions[vm.pc].opcode == OP_OPEN_BRACKET 
+                        || vm.instructions[vm.pc].opcode == OP_CLOSE_BRACKET)) {
                     kb_Scan();
                     if(kb_Data[6] == kb_Clear)
                         break;

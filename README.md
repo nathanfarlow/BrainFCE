@@ -49,7 +49,7 @@ Huge thanks to MateoConLechuga for the toolchain and all the work on the CE calc
 * Select and run program
 
 ## "Documentation"
-Bytecode with key interrupts is recommended until your program is perfected. This prevents infinite loops in case your brainfuck code has a bug and loops infinitely. Simply press clear to stop the bytecode execution as long as the key interrupt checkbox is selected.
+Bytecode with the hold clear option enabled is recommended until your program is perfected. This prevents infinite loops in case your brainfuck code has a bug and loops infinitely. Simply press and hold the clear button to stop the bytecode execution as long as the checkbox is selected.
 
 Once your program is perfected you can run it natively. There will be no interrupts, so if you want to stop the execution you will have to clear your ram... (I take no responsibility) Native execution runs exponentially faster than bytecode on brainfuck programs with lots of calculations such as the fractal program. The fractal program takes ~65 minutes to complete on a normal calculator when using optimized native.
 
