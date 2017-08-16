@@ -117,13 +117,14 @@ loop:
 }
 
 #ifdef __TICE__
-#define MAX_BYTECODE 5000 /*3875 for fractal program*/
-#define MAX_INSN 36000 /*35035 for fractal program*/
+/*35588 native insns for fractal program*/
+#define MAX_INSN 36000
 #else
-#define MAX_INSN 1024 * 1024
+#define MAX_INSN (1024 * 1024)
 #endif
 
-uint8_t native_insn_mem[MAX_INSN]; //because malloc() can't allocate this much apparently
+/*3875 bytecode insns needed for fractal program*/
+#define MAX_BYTECODE (MAX_INSN / sizeof(Instruction_t))
 
 void op(Compiler_t *c, uint8_t opcode) { 
     if (c->pc >= MAX_INSN) {
@@ -358,18 +359,12 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
         i += consumed;
     }
 
-#ifdef __TICE__
     if(c->code_length > MAX_BYTECODE) {
         c->error = E_OUT_OF_MEMORY;
         return;
     }
-#endif
 
-#ifdef __TICE__
-    c->code.bytecode = (Instruction_t*)0x0D09466; //plotSScreen (21945 bytes) need to call _OS(asm_ClrTxtShd); sometime
-#else
     c->code.bytecode = malloc(c->code_length * sizeof(Instruction_t));
-#endif
 
     i = 0;
     while (i < c->program_length) {
@@ -423,7 +418,7 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
     unsigned int i;
 
-    c->code.native = native_insn_mem;
+    c->code.native = malloc(MAX_INSN);
 
     i = 0;
     while(i < c->program_length) {
@@ -585,15 +580,17 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
 }
 
 void comp_CleanupBytecode(Compiler_t *c) {
-#ifndef __TICE__
     if(c->code.bytecode != NULL) {
         free(c->code.bytecode);
         c->code.bytecode = NULL;
     }
-#endif
 }
 void comp_CleanupNative(Compiler_t *c) {
-    //We don't malloc() the native array so we won't free it (for now anyway)
+    if(c->code.native != NULL) {
+        free(c->code.native);
+        c->code.native = NULL;
+    }
+    
 }
 
 #ifdef __cplusplus

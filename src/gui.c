@@ -339,10 +339,11 @@ void gui_draw() {
     gui_file_info();
 }
 
-//again, becaues malloc() is sketchy af here
+//for some reason, we can't malloc this, but it works just fine like this...
 #define MAX_PROGRAM_SIZE 12000
 char code[MAX_PROGRAM_SIZE];
 
+//have to keep the vm here because it's too much data for the 4kb stack lol
 struct VM vm;
 
 #ifdef _DEBUG
@@ -417,7 +418,7 @@ void run_bytecode() {
 #ifdef _DEBUG
     print_cells(_DEBUG_CELL_AMOUNT);
 #endif
-    
+
     vm_Cleanup(&vm);
     gui_navigate_console();
     gui_reset_console();
@@ -474,6 +475,7 @@ void run_native() {
     print_cells(_DEBUG_CELL_AMOUNT);
 #endif
     
+    comp_CleanupNative(&c);
     vm_Cleanup(&vm);
     gui_navigate_console();
     gui_reset_console();
@@ -603,7 +605,6 @@ void gui_run() {
 
 void gui_cleanup() {
     list_Cleanup(&list);
-    _OS(asm_ClrTxtShd); //because we use the plotSScreen memory
 }
 
 CELL_TYPE bf_get_input() {

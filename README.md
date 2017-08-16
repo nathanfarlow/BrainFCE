@@ -69,7 +69,7 @@ The max program size is 12000 characters.
 
 The max native instrucitons is 36000.
 
-The max bytecode instructions is 5000.
+The max bytecode instructions is 9000.
 
 You will get an error printed to the console if any of these are exceeded.
 
