@@ -7,6 +7,16 @@ extern "C" {
 
 #include "compiler.h"
 
+#ifdef __TICE__
+/*35588 native insns for fractal program*/
+#define MAX_INSN 36000
+#else
+#define MAX_INSN (1024 * 1024)
+#endif
+
+/*3875 bytecode insns needed for fractal program*/
+#define MAX_BYTECODE (MAX_INSN / sizeof(Instruction_t))
+
 const char *error_strings[9] = {
     "Success",
     "Out of memory",
@@ -20,6 +30,27 @@ const char *error_strings[9] = {
 };
 
 /*
+Returns the amount of consecutive non bf characters.
+*/
+unsigned int consec_non_bf(const char *code, size_t len, unsigned int index) {
+    unsigned int i;
+    for(i = index; i < len; i++) {
+        switch (code[i]) {
+        case CHAR_GREATER:
+        case CHAR_LESS:
+        case CHAR_PLUS:
+        case CHAR_MINUS:
+        case CHAR_PERIOD:
+        case CHAR_COMMA:
+        case CHAR_OPEN_BRACKET:
+        case CHAR_CLOSE_BRACKET:
+            return i - index;
+        }
+    }
+    return i - index;
+}
+
+/*
     This function basically takes strings of the same type of insn and changes it into one instruction
 
     >><><<>>> = OP_ADD_CELL_POINTER 3
@@ -28,7 +59,6 @@ const char *error_strings[9] = {
 void scan_for_operand(const char *code, size_t len, unsigned int index, char add, char sub, CELL_TYPE *operand, size_t *consumed) {
 
     *operand = 0;
-    *consumed = 0;
 
     for(; index < len; index++) {
         char c = code[index];
@@ -49,23 +79,27 @@ void scan_for_operand(const char *code, size_t len, unsigned int index, char add
                 (*operand)--;
             else
                 return;
+            (*consumed)++;
+            break;
+        default: {
+            //have to split these lines up due to a compiler bug...
+            unsigned int consecutive;
+            consecutive = consec_non_bf(code, len, index);
+            *consumed += consecutive;
+            index += consecutive - 1; //-1 because index is incremented at the end of this loop
+            break;
         }
 
-        (*consumed)++;
+        }
+
     }
 }
-
 
 #define index_equ(check_index, character) (check_index < len && code[check_index] == character)
 
 Instruction_t next_insn(const char *code, size_t len, unsigned int index, bool optimize, size_t *consumed) {
     Instruction_t insn = {0, 0};
 
-    unsigned int loops = 0;
-
-    *consumed = 1;
-
-loop:
     switch (code[index]) {
     case CHAR_GREATER:
     case CHAR_LESS:
@@ -89,42 +123,41 @@ loop:
         break;
     case CHAR_PERIOD:
         insn.opcode = OP_PRINT_CELL;
+        (*consumed)++;
         break;
     case CHAR_COMMA:
         insn.opcode = OP_INPUT_CELL;
+        (*consumed)++;
         break;
     case CHAR_OPEN_BRACKET:
         insn.opcode = OP_OPEN_BRACKET;
-
+        
         if (optimize && index_equ(index + 1, CHAR_MINUS) && index_equ(index + 2, CHAR_CLOSE_BRACKET)) {
             insn.opcode = OP_SET_ZERO;
-            *consumed = 3;
+            *consumed += 3;
+        } else {
+            (*consumed)++;
         }
 
         break;
     case CHAR_CLOSE_BRACKET:
         insn.opcode = OP_CLOSE_BRACKET;
+        (*consumed)++;
         break;
-    default:
-        index++;
-        loops++;
-        goto loop;
+    default: {
+        //usually we could just skip this, and call next_insn(index + 1), but the ti calc
+        //doesn't have enough stack memory for that and we'd overflow if there were too many
+        //consecutive non bf characters. (around 150)
+        unsigned int consecutive; //we have to split these lines up again due to that weird compiler bug
+        consecutive = consec_non_bf(code, len, index);
+        *consumed += consecutive;
+        return next_insn(code, len, index + consecutive, optimize, consumed);
+        }
+        
     }
-
-    *consumed += loops;
 
     return insn;
 }
-
-#ifdef __TICE__
-/*35588 native insns for fractal program*/
-#define MAX_INSN 36000
-#else
-#define MAX_INSN (1024 * 1024)
-#endif
-
-/*3875 bytecode insns needed for fractal program*/
-#define MAX_BYTECODE (MAX_INSN / sizeof(Instruction_t))
 
 void op(Compiler_t *c, uint8_t opcode) { 
     if (c->pc >= MAX_INSN) {
@@ -350,7 +383,7 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
     //calculate the amount of instructions
     i = 0;
     while (i < c->program_length) {
-        size_t consumed;
+        size_t consumed = 0;
 
         next_insn(c->program, c->program_length, i, optimize, &consumed);
 
@@ -369,7 +402,7 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
     i = 0;
     while (i < c->program_length) {
         
-        size_t consumed;
+        size_t consumed = 0;
 
         //have to split these two lines up due to a compiler error lol
         //P3: Internal Error(0x83BAF1): \ Please contact Technical Support \ make: *** [obj/compiler.obj] Error -1
@@ -422,7 +455,7 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
 
     i = 0;
     while(i < c->program_length) {
-        size_t consumed;
+        size_t consumed = 0;
 
         //have to split these two lines up due to a compiler error lol
         //P3: Internal Error(0x83BAF1): \ Please contact Technical Support \ make: *** [obj/compiler.obj] Error -1
@@ -590,7 +623,6 @@ void comp_CleanupNative(Compiler_t *c) {
         free(c->code.native);
         c->code.native = NULL;
     }
-    
 }
 
 #ifdef __cplusplus
