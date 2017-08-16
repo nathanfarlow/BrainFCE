@@ -47,6 +47,10 @@ enum Opcodes {
     OP_OPEN_BRACKET,
     OP_CLOSE_BRACKET,
     OP_SET_ZERO,
+
+    OP_DONE     //Never actually added to the bytecode.
+                //It just serves as a flag to the compiler
+                //that the program is done reading.
 };
 
 extern const char *error_strings[9];

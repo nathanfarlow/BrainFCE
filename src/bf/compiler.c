@@ -100,6 +100,11 @@ void scan_for_operand(const char *code, size_t len, unsigned int index, char add
 Instruction_t next_insn(const char *code, size_t len, unsigned int index, bool optimize, size_t *consumed) {
     Instruction_t insn = {0, 0};
 
+    if(index >= len) {
+        insn.opcode = OP_DONE;
+        return insn;
+    }
+
     switch (code[index]) {
     case CHAR_GREATER:
     case CHAR_LESS:
@@ -373,6 +378,7 @@ void comp_Create(Compiler_t *c, const char *program, size_t program_length) {
 
 void comp_CompileBytecode(Compiler_t *c, bool optimize) {
     unsigned int i;
+    Instruction_t insn;
 
     if (c->program == NULL) {
         c->error = E_GENERIC_COMPILE;
@@ -381,14 +387,8 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 
     //calculate the amount of instructions
     i = 0;
-    while (i < c->program_length) {
-        size_t consumed = 0;
-
-        next_insn(c->program, c->program_length, i, optimize, &consumed);
-
+    while(next_insn(c->program, c->program_length, i, optimize, &i).opcode != OP_DONE) {
         c->code_length++;
-
-        i += consumed;
     }
 
     if(c->code_length > MAX_BYTECODE) {
@@ -404,14 +404,7 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 #endif
 
     i = 0;
-    while (i < c->program_length) {
-        
-        size_t consumed = 0;
-
-        //have to split these two lines up due to a compiler error lol
-        //P3: Internal Error(0x83BAF1): \ Please contact Technical Support \ make: *** [obj/compiler.obj] Error -1
-        Instruction_t insn;
-        insn = next_insn(c->program, c->program_length, i, optimize, &consumed);
+    while ((insn = next_insn(c->program, c->program_length, i, optimize, &i)).opcode != OP_DONE) {
 
         switch (insn.opcode) {
         case OP_OPEN_BRACKET:
@@ -445,7 +438,6 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 
 
         c->code.bytecode[c->pc++] = insn;
-        i += consumed;
     }
 
     if(c->stack.top != 0)
@@ -454,17 +446,13 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
 
 void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
     unsigned int i;
+    Instruction_t insn;
 
     c->code.native = malloc(MAX_NATIVE);
 
     i = 0;
-    while(i < c->program_length) {
-        size_t consumed = 0;
+    while((insn = next_insn(c->program, c->program_length, i, optimize, &i)).opcode != OP_DONE) {
 
-        //have to split these two lines up due to a compiler error lol
-        //P3: Internal Error(0x83BAF1): \ Please contact Technical Support \ make: *** [obj/compiler.obj] Error -1
-        Instruction_t insn;
-        insn = next_insn(c->program, c->program_length, i, optimize, &consumed);
         switch (insn.opcode) {
         case OP_ADD_CELL_POINTER:
 
@@ -606,7 +594,6 @@ void comp_CompileNative(Compiler_t *c, struct Memory *mem, bool optimize) {
             break;
         }
 
-        i += consumed;
     }
 
     op(c, 0xC9); //ret
