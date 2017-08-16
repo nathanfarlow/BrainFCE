@@ -396,7 +396,12 @@ void comp_CompileBytecode(Compiler_t *c, bool optimize) {
         return;
     }
 
+#ifdef __TICE__
+    //I have no idea why, but on the calculator, if a program is too small, malloc'ing it corrupts other memory
+    c->code.bytecode = malloc(MAX_BYTECODE * sizeof(Instruction_t));
+#else
     c->code.bytecode = malloc(c->code_length * sizeof(Instruction_t));
+#endif
 
     i = 0;
     while (i < c->program_length) {
