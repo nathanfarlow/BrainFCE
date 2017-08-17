@@ -112,8 +112,10 @@ Instruction_t next_insn(const char *code, size_t len, unsigned int index, bool o
 
         if (optimize)
             scan_for_operand(code, len, index, CHAR_GREATER, CHAR_LESS, &insn.operand, consumed);
-        else
+        else {
             insn.operand = code[index] == CHAR_GREATER ? 1 : -1;
+            (*consumed)++;
+        }
 
         break;
     case CHAR_PLUS:
@@ -122,8 +124,10 @@ Instruction_t next_insn(const char *code, size_t len, unsigned int index, bool o
 
         if(optimize)
             scan_for_operand(code, len, index, CHAR_PLUS, CHAR_MINUS, &insn.operand, consumed);
-        else
+        else {
             insn.operand = code[index] == CHAR_PLUS ? 1 : -1;
+            (*consumed)++;
+        }
 
         break;
     case CHAR_PERIOD:
