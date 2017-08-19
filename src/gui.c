@@ -97,7 +97,7 @@ void gui_file_info() {
     gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52, 5, 5);
     gfx_SetColor(BORDER_COLOR);
 //key interrupt checkbox
-    gfx_PrintStringXY("Hold clear to", 170 + 8 + 4 + 4, 50 + 12);
+    gfx_PrintStringXY("Press [clear] to", 170 + 8 + 4 + 4, 50 + 12);
     rect_border(LCD_WIDTH - 4 - 4 - 8, 50 + 12, 8, 8);
     gfx_SetColor(key_interrupt ? BORDER_COLOR : BACKGROUND_COLOR);
     gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52 + 12, 5, 5);
@@ -395,7 +395,7 @@ void run_bytecode() {
                 error = vm_Step(&vm);
                 if(error != E_SUCCESS) {
                     char buffer[25];
-                    sprintf(buffer, "Runtime error %i", error);
+                    sprintf(buffer, "Bytecode runtime error %i", error);
                     gui_console_print(buffer);
                     break;
                 }
