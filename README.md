@@ -1,5 +1,5 @@
 # BrainfuckCE
-A Brainfuck interpreter and native compiler written in C for the TI 84 PCE calculators. The bytecode compiler and interpreter work on any system. The native code only compiles to ez80.
+A Brainfuck interpreter and native compiler written in C for the TI 84+ CE calculators. The bytecode compiler and interpreter work on any system. The native code only compiles to ez80.
 
 Huge thanks to MateoConLechuga for the toolchain and all the work on the CE calculator. Thanks also to Iambian over on the cemetech irc.
 
