@@ -50,7 +50,7 @@ I've already packed the fractal, hello world, and xmas programs as .8xp files in
 * Open BrainfuckCE
 * Select and run program
 
-## "Documentation"
+## Documentation
 Bytecode with the 'mode to stop bytecode' option enabled is recommended until your program is perfected. This prevents infinite loops in case your brainfuck code has a bug and loops infinitely. Simply press the mode button to stop the bytecode execution as long as the checkbox is selected.
 
 Once your program is perfected you can run it natively. There will be no interrupts, so if you want to stop the execution you will have to clear your ram... (I take no responsibility) Native execution runs exponentially faster than bytecode on brainfuck programs with lots of calculations such as the fractal program. The fractal program takes ~60 minutes to complete on a normal calculator when using optimized native.
