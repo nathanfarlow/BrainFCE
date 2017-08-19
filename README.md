@@ -19,7 +19,8 @@ Huge thanks to MateoConLechuga for the toolchain and all the work on the CE calc
 
 ## How to build from source
 * Download and install https://github.com/CE-Programming/toolchain/releases
-* Navigate to BrainfuckCE directory in a command prompt/terminal
+* Download or clone this repository
+* Navigate to the BrainfuckCE directory in a command prompt/terminal
 * Type 'make' without quotes.
 * BRAINF.8xp will be in the bin directory.
 
@@ -31,6 +32,7 @@ Huge thanks to MateoConLechuga for the toolchain and all the work on the CE calc
 * Use arrow keys and select your program and either run with bytecode or native.
 
 ## How to create brainfuck programs
+I've already packed the fractal, hello world, and xmas programs as .8xp files in the releases. You can just send these to your calculator and run with BrainfuckCE.
 
 #### Option 1 - Create your own on the calculator
 * Create a TI BASIC program on your calculator like usual.
@@ -49,16 +51,16 @@ Huge thanks to MateoConLechuga for the toolchain and all the work on the CE calc
 * Select and run program
 
 ## "Documentation"
-Bytecode with the hold clear option enabled is recommended until your program is perfected. This prevents infinite loops in case your brainfuck code has a bug and loops infinitely. Simply press and hold the clear button to stop the bytecode execution as long as the checkbox is selected.
+Bytecode with the 'mode to stop bytecode' option enabled is recommended until your program is perfected. This prevents infinite loops in case your brainfuck code has a bug and loops infinitely. Simply press the mode button to stop the bytecode execution as long as the checkbox is selected.
 
-Once your program is perfected you can run it natively. There will be no interrupts, so if you want to stop the execution you will have to clear your ram... (I take no responsibility) Native execution runs exponentially faster than bytecode on brainfuck programs with lots of calculations such as the fractal program. The fractal program takes ~65 minutes to complete on a normal calculator when using optimized native.
+Once your program is perfected you can run it natively. There will be no interrupts, so if you want to stop the execution you will have to clear your ram... (I take no responsibility) Native execution runs exponentially faster than bytecode on brainfuck programs with lots of calculations such as the fractal program. The fractal program takes ~60 minutes to complete on a normal calculator when using optimized native.
 
-The optimize checkbox is recommended and will increase speeds with both the bytecode and native as well as shrink the produced code.
+The optimize checkbox is recommended and will increase speeds with both the bytecode and native as well as shrink the produced code without changing any of the code's original functionality.
 
 You can input up to 13 characters in the input box; press alpha to access letters. Press delete to delete one
 character or clear to clear the whole textbox.
 
-Press the mode button to quit the application. Press the clear button to clear the console when the brainfuck program has finished.
+Press the mode button to quit the application. Press the clear button to exit the console when the brainfuck program has finished.
 
 BrainfuckCE can run both archived and unarhived programs without an issue.
 
