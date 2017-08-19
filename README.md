@@ -64,7 +64,7 @@ Press the mode button to quit the application. Press the clear button to exit th
 
 BrainfuckCE can run both archived and unarhived programs without an issue.
 
-## Technical docs
+## Technical documentation
 The max stack depth for leading opening brackets is 100.
 
 The max program size is 12000 characters.
