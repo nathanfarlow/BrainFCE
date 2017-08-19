@@ -57,8 +57,6 @@ const char non_alpha_table[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 //if the alpha key is pressed for the input textbox
 bool alpha_mode = false;
 
-bool terminate = false;
-
 //draw an outline
 void rect_border(uint24_t x, uint8_t y, uint24_t width, uint8_t height) {
     gfx_HorizLine(x, y, width);
@@ -97,7 +95,7 @@ void gui_file_info() {
     gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52, 5, 5);
     gfx_SetColor(BORDER_COLOR);
 //key interrupt checkbox
-    gfx_PrintStringXY("Press [clear] to", 170 + 8 + 4 + 4, 50 + 12);
+    gfx_PrintStringXY("Press [mode] to", 170 + 8 + 4 + 4, 50 + 12);
     rect_border(LCD_WIDTH - 4 - 4 - 8, 50 + 12, 8, 8);
     gfx_SetColor(key_interrupt ? BORDER_COLOR : BACKGROUND_COLOR);
     gfx_FillRectangle_NoClip(LCD_WIDTH - 4 - 4 - 6, 52 + 12, 5, 5);
@@ -271,10 +269,8 @@ void gui_navigate_console() {
 
     while(key != sk_Clear) {
         key = os_GetCSC();
-        if(key == sk_Mode) {
-            terminate = true;
-            break;
-        } else if(key == sk_Right) {
+
+        if(key == sk_Right) {
             cursor_x++;
             if(cursor_x > CONSOLE_LINE_LENGTH - 28)
                 cursor_x = CONSOLE_LINE_LENGTH - 28;
@@ -404,12 +400,12 @@ void run_bytecode() {
                         (vm.instructions[vm.pc].opcode == OP_OPEN_BRACKET 
                         || vm.instructions[vm.pc].opcode == OP_CLOSE_BRACKET)) {
                     kb_Scan();
-                    if(kb_Data[6] == kb_Clear)
+                    if(kb_Data[1] == kb_Mode)
                         break;
                 }
             }
 
-            strcpy(&console[1][10], " Done. Use arrows to navigate.");
+            strcpy(&console[1][10], " Done. Use arrows to navigate. Press clear to exit console.");
             gui_draw_console_text();
 
         }
@@ -490,7 +486,7 @@ void gui_run() {
 
     gui_draw();
 
-    while(!terminate) {
+    while(true) {
         key = os_GetCSC();
 
         if(key == sk_Down) {
